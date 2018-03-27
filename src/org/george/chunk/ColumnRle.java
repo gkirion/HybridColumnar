@@ -76,7 +76,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		int i = start;
 		Tuple2<E, Integer> val = get(i);
 		while (i < end) {
-			//sum += (int)val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
+			sum += (int)val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
 			i += val.getSecond();
 			val = treeMap.get(i);
 		}

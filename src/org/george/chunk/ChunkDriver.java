@@ -300,20 +300,59 @@ public class ChunkDriver {
 		ColumnBitmapRoaring<Integer> colror = new ColumnBitmapRoaring<>();
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
 		for (int k = 0; k < 1000000; k++) {
-			num = rand.nextInt(100);
-			//colbit.add(num);
-			//colrle.add(num);
-			//colplain.add(num);
-			//colror.add(num);
+			num = rand.nextInt(10);
+			colbit.add(num);
+			colrle.add(num);
+			colplain.add(num);
+			colror.add(num);
 		}
 
 		//System.out.println(colbit.getCardinality());
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
-		/*for (int k = 0; k < 1000000; k++) {
+		for (int k = 0; k < 1000000; k++) {
 			if (!colbit.get(k).getFirst().equals(colrle.get(k).getFirst()) || !colrle.get(k).getFirst().equals(colplain.get(k).getFirst()) || !colror.get(k).getFirst().equals(colplain.get(k).getFirst())) {
 				System.out.println("NOT OK");
 			}
-		}*/
+		}
+		if (!colplain.sum(10, colplain.getLength() - 90000).equals(colbit.sum(10, colbit.getLength() - 90000))) {
+			System.out.println("SUM NOT OK");
+		}
+		if (!colplain.sum(10, colplain.getLength() - 90000).equals(colror.sum(10, colror.getLength() - 90000))) {
+			System.out.println("1SUM NOT OK");
+		}
+		if (!colplain.sum(10, colplain.getLength()).equals(colror.sum(10, colror.getLength()))) {
+			System.out.println("2SUM NOT OK");
+		}
+		start = Instant.now();
+		colplain.sum(0, colplain.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("PLAIN: " + duration.toMillis() + " ms");
+		start = Instant.now();
+		colrle.sum(0, colrle.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("RLE: " + duration.toMillis() + " ms");
+		start = Instant.now();
+		colbit.sum(0, colbit.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("BITSET: " + duration.toMillis() + " ms");
+		start = Instant.now();
+		colror.sum(0, colror.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ROARING: " + duration.toMillis() + " ms");
+		start = Instant.now();
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println(duration.toMillis() + " ms");
+		int testint = 40000;
+		short test = (short) (testint);
+		System.out.println(test);
+		System.out.println((int)test);
+		System.out.println(test & 0xFFFF);
+
 		
 	}
 
