@@ -74,9 +74,9 @@ public class ChunkDriver {
 		Object s = new String("geo");
 		s = new Integer(4);
 		System.out.println(s);
-		for (Entry<Integer, Tuple2<String, Integer>> entry : col.entrySet()) {
+		/*for (Entry<Integer, Tuple2<String, Integer>> entry : col.entrySet()) {
 			System.out.println(entry.getKey() + "\t" + entry.getValue());
-		}
+		}*/
 		ArrayList<Tuple2<String, Integer>> list = new ArrayList<>();
 		list.add(new Tuple2<String, Integer>("tzopaty", 1));
 		list.add(new Tuple2<String, Integer>("tzopaty", 2));
@@ -301,15 +301,15 @@ public class ChunkDriver {
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
 		for (int k = 0; k < 1000000; k++) {
 			num = rand.nextInt(10);
-			colbit.add(num);
-			colrle.add(num);
-			colplain.add(num);
+			//colbit.add(num);
+			//colrle.add(num);
+			//colplain.add(num);
 			colror.add(num);
 		}
 
 		//System.out.println(colbit.getCardinality());
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
-		for (int k = 0; k < 1000000; k++) {
+		/*for (int k = 0; k < 1000000; k++) {
 			if (!colbit.get(k).getFirst().equals(colrle.get(k).getFirst()) || !colrle.get(k).getFirst().equals(colplain.get(k).getFirst()) || !colror.get(k).getFirst().equals(colplain.get(k).getFirst())) {
 				System.out.println("NOT OK");
 			}
@@ -344,6 +344,14 @@ public class ChunkDriver {
 		duration = Duration.between(start, end);
 		System.out.println("ROARING: " + duration.toMillis() + " ms");
 		start = Instant.now();
+		for (int k = 0; k < 1000000; k++) {
+			colrle.get(k);
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println(duration.toMillis() + " ms");
+		start = Instant.now();
+		
 		end = Instant.now();
 		duration = Duration.between(start, end);
 		System.out.println(duration.toMillis() + " ms");
@@ -352,7 +360,7 @@ public class ChunkDriver {
 		System.out.println(test);
 		System.out.println((int)test);
 		System.out.println(test & 0xFFFF);
-
+*/
 		
 	}
 
