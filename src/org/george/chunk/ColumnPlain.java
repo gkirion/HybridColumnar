@@ -131,7 +131,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		for (int i = start; i < end; i++) {
-			sum += (int)arrayList.get(i);
+			sum += (Integer)arrayList.get(i);
 		}
 		return sum;
 	}
@@ -141,7 +141,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		Long sum = new Long(0);
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
-				sum += (int)arrayList.get(i);
+				sum += (Integer)arrayList.get(i);
 			}
 		}
 		return sum;

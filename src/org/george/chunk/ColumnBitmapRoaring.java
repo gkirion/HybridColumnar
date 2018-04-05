@@ -131,11 +131,11 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		if (end - start == 1) {
-			sum += (int)get(start).getFirst() * get(start).getSecond();
+			sum += (Integer)get(start).getFirst() * get(start).getSecond();
 			return sum;
 		}
 		for (E item : mappings.keySet()) {
-			sum += (int)item * mappings.get(item).get(start, end).cardinality();
+			sum += (Integer)item * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
@@ -148,7 +148,7 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 		for (E value : values) {
 			bitmap.or(mappings.get(value));
 			bitmap.and(bitSet);
-			sum += (int)value * bitmap.cardinality();
+			sum += (Integer)value * bitmap.cardinality();
 			bitmap.clear();
 		}
 		return sum;

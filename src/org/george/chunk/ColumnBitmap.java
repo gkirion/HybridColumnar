@@ -126,11 +126,11 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		if (end - start == 1) {
-			sum += (int)get(start).getFirst() * get(start).getSecond();
+			sum += (Integer)get(start).getFirst() * get(start).getSecond();
 			return sum;
 		}
 		for (E item : mappings.keySet()) {
-			sum += (int)item * mappings.get(item).get(start, end).cardinality();
+			sum += (Integer)item * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
@@ -142,7 +142,7 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 		for (E value : mappings.keySet()) {
 			bSet.or(mappings.get(value)); // load bitset of value
 			bSet.and(bitSet);
-			sum += (int)value * bSet.cardinality();
+			sum += (Integer)value * bSet.cardinality();
 			bSet.clear();
 		}
 		return sum;

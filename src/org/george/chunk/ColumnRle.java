@@ -180,7 +180,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		int index = find(start, 0, arrayList.size() - 1);
 		while (i < end) {
 			val = arrayList.get(index);
-			sum += (int)val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
+			sum += (Integer)val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
 			i += val.getSecond();
 			index++;
 		}
@@ -194,7 +194,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		Tuple3<E, Integer, Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			sum += (int)tuple.getFirst() * bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+			sum += (Integer)tuple.getFirst() * bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
 		}
 		return sum;
 	}
