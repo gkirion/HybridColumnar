@@ -299,21 +299,38 @@ public class ChunkDriver {
 		ColumnPlain<Integer> colplain = new ColumnPlain<>();
 		ColumnBitmapRoaring<Integer> colror = new ColumnBitmapRoaring<>();
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
+		ArrayList<Integer> arrint = new ArrayList<>();
 		for (int k = 0; k < 1000000; k++) {
-			num = rand.nextInt(10);
-			//colbit.add(num);
-			//colrle.add(num);
-			//colplain.add(num);
+			num = rand.nextInt(100);
+			arrint.add(num);
+		}
+		arrint.sort(null);
+		for (int k = 0; k < 1000000; k++) {
+			//num = rand.nextInt(100);
+			num = arrint.get(k);
+			colbit.add(num);
+			colrle.add(num);
+			colplain.add(num);
 			colror.add(num);
 		}
 
 		//System.out.println(colbit.getCardinality());
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
-		/*for (int k = 0; k < 1000000; k++) {
+		for (int k = 0; k < 1000000; k++) {
 			if (!colbit.get(k).getFirst().equals(colrle.get(k).getFirst()) || !colrle.get(k).getFirst().equals(colplain.get(k).getFirst()) || !colror.get(k).getFirst().equals(colplain.get(k).getFirst())) {
 				System.out.println("NOT OK");
 			}
 		}
+		for (int k = 1000; k < 1000000 - 92323; k++) {
+			if (!colbit.get(k).getFirst().equals(colrle.get(k).getFirst()) || !colrle.get(k).getFirst().equals(colplain.get(k).getFirst()) || !colror.get(k).getFirst().equals(colplain.get(k).getFirst())) {
+				System.out.println("NOT OK");
+			}
+		}
+		for (int k = 1000; k < 1000000 - 92323; k++) {
+			if (!colbit.get(k).getFirst().equals(colrle.get(k).getFirst()) || !colrle.get(k).getFirst().equals(colplain.get(k).getFirst()) || !colror.get(k).getFirst().equals(colplain.get(k).getFirst())) {
+				System.out.println("NOT OK");
+			}
+		}/*
 		if (!colplain.sum(10, colplain.getLength() - 90000).equals(colbit.sum(10, colbit.getLength() - 90000))) {
 			System.out.println("SUM NOT OK");
 		}
@@ -323,45 +340,208 @@ public class ChunkDriver {
 		if (!colplain.sum(10, colplain.getLength()).equals(colror.sum(10, colror.getLength()))) {
 			System.out.println("2SUM NOT OK");
 		}
+		if (!colplain.sum(10, colplain.getLength()).equals(colrle.sum(10, colrle.getLength()))) {
+			System.out.println("2SUM NOT OK");
+		}
+		if (!colplain.sum(10, colplain.getLength() - 90000).equals(colrle.sum(10, colrle.getLength() - 90000))) {
+			System.out.println("2SUM NOT OK");
+		}
+		if (!colplain.sum(0, colplain.getLength()).equals(colrle.sum(0, colrle.getLength()))) {
+			System.out.println("2SUM NOT OK");
+		}
+		if (!colplain.sum(0, colplain.getLength() - 90000).equals(colrle.sum(0, colrle.getLength() - 90000))) {
+			System.out.println("2SUM NOT OK");
+		}
+		*/
+		
 		start = Instant.now();
-		colplain.sum(0, colplain.getLength());
+		for (int k = 0; k < 1000000; k++) {
+			colplain.get(k);
+		}
 		end = Instant.now();
 		duration = Duration.between(start, end);
-		System.out.println("PLAIN: " + duration.toMillis() + " ms");
-		start = Instant.now();
-		colrle.sum(0, colrle.getLength());
-		end = Instant.now();
-		duration = Duration.between(start, end);
-		System.out.println("RLE: " + duration.toMillis() + " ms");
-		start = Instant.now();
-		colbit.sum(0, colbit.getLength());
-		end = Instant.now();
-		duration = Duration.between(start, end);
-		System.out.println("BITSET: " + duration.toMillis() + " ms");
-		start = Instant.now();
-		colror.sum(0, colror.getLength());
-		end = Instant.now();
-		duration = Duration.between(start, end);
-		System.out.println("ROARING: " + duration.toMillis() + " ms");
+		System.out.println("PLAIN ITERATE: " + duration.toMillis() + " ms");
+		
 		start = Instant.now();
 		for (int k = 0; k < 1000000; k++) {
 			colrle.get(k);
 		}
 		end = Instant.now();
 		duration = Duration.between(start, end);
-		System.out.println(duration.toMillis() + " ms");
-		start = Instant.now();
+		System.out.println("RLE ITERATE: " + duration.toMillis() + " ms");
 		
+		start = Instant.now();
+		for (int k = 0; k < 1000000; k++) {
+			colbit.get(k);
+		}
 		end = Instant.now();
 		duration = Duration.between(start, end);
-		System.out.println(duration.toMillis() + " ms");
+		System.out.println("BITSET ITERATE: " + duration.toMillis() + " ms");
+		
+		start = Instant.now();
+		for (int k = 0; k < 1000000; k++) {
+			colror.get(k);
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ROARING ITERATE: " + duration.toMillis() + " ms");
+		
+		start = Instant.now();
+		colplain.sum(0, colplain.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("PLAIN: " + duration.toMillis() + " ms");
+		System.out.println(colplain.sum(0, colplain.getLength()));
+
+		start = Instant.now();
+		colrle.sum(0, colrle.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("RLE: " + duration.toMillis() + " ms");
+		System.out.println(colrle.sum(0, colrle.getLength()));
+
+		start = Instant.now();
+		colbit.sum(0, colbit.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("BITSET: " + duration.toMillis() + " ms");
+		System.out.println(colbit.sum(0, colbit.getLength()));
+
+		start = Instant.now();
+		colror.sum(0, colror.getLength());
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ROARING: " + duration.toMillis() + " ms");
+		System.out.println(colror.sum(0, colror.getLength()));
+
+		start = Instant.now();
+		colplain.selectLessThan(4);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("PLAIN SELECT: " + duration.toMillis() + " ms");
+		System.out.println(colplain.selectLessThan(4).cardinality());
+		start = Instant.now();
+		colrle.selectLessThan(4);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("RLE SELECT: " + duration.toMillis() + " ms");
+		System.out.println(colrle.selectLessThan(4).cardinality());
+		start = Instant.now();
+		colbit.selectLessThan(4);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("BITSET SELECT: " + duration.toMillis() + " ms");
+		System.out.println(colbit.selectLessThan(4).cardinality());
+		start = Instant.now();
+		colror.selectLessThan(4);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ROARING SELECT: " + duration.toMillis() + " ms");
+		System.out.println(colror.selectLessThan(4).cardinality());
+		
+		
+		BitSet bSet = colplain.selectLessThan(4);
+		//RoaringBitmap bSet = colplain.selectLessThanOrEquals(9);
+		start = Instant.now();
+		colplain.sum(bSet);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("SUM PLAIN: " + duration.toMillis() + " ms");
+		System.out.println(colplain.sum(bSet));
+		
+		start = Instant.now();
+		colrle.sum(bSet);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("SUM RLE: " + duration.toMillis() + " ms");
+		System.out.println(colrle.sum(bSet));
+		
+		start = Instant.now();
+		colbit.sum(bSet);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("SUM BITSET: " + duration.toMillis() + " ms");
+		System.out.println(colbit.sum(bSet));
+		
+		start = Instant.now();
+		colror.sum(bSet);
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("SUM ROARING: " + duration.toMillis() + " ms");
+		System.out.println(colror.sum(bSet));
+
+		
 		int testint = 40000;
 		short test = (short) (testint);
 		System.out.println(test);
 		System.out.println((int)test);
 		System.out.println(test & 0xFFFF);
-*/
 		
+		BitSet bitSet2 = new BitSet();
+		bitSet2.set(0);
+		bitSet2.set(1);
+		bitSet2.set(2);
+		BitSet bitSet3 = bitSet2.get(1, 3);
+		System.out.println(bitSet3.get(0));
+		System.out.println(bitSet3.get(1));
+		System.out.println(bitSet3.get(2));
+		System.out.println(bitSet2.length());
+		System.out.println(bitSet3.length());
+		bitSet3.and(bitSet2);
+		System.out.println(bitSet3);
+		
+		RoaringBitmap roaringBitmap = new RoaringBitmap();
+		BitSet bitSet4 = new BitSet();
+		start = Instant.now();
+		for (int k = 0; k < 1000000; k++) {
+			num = arrint.get(k);
+			roaringBitmap.set(k * 100);
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ITERATE ROARING: " + duration.toMillis() + " ms");
+		
+		start = Instant.now();
+		for (int k = 0; k < 1000000; k++) {
+			num = arrint.get(k);
+			bitSet4.set(k * 100);
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("ITERATE BITSET: " + duration.toMillis() + " ms");
+		
+		start = Instant.now();
+		for (int k = 0; k < 10000; k++) {
+			//roaringBitmap.get(500000, 500000 + rand.nextInt(800000));
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("GET ROARING: " + duration.toMillis() + " ms");
+		
+		start = Instant.now();
+		for (int k = 0; k < 10000; k++) {
+			bitSet4.get(500000, 500000 + rand.nextInt(800000));
+		}
+		end = Instant.now();
+		duration = Duration.between(start, end);
+		System.out.println("GET BITSET: " + duration.toMillis() + " ms");
+		BitSet bitSet5 = bitSet4.get(400000, 600000);
+		bitSet4.or(bitSet5);
+		System.out.println(bitSet4.cardinality());
+		System.out.println(roaringBitmap.cardinality());
+
+		roaringBitmap.or(bitSet5);
+		System.out.println(roaringBitmap.cardinality());
+		
+		bitSet4.and(bitSet5);
+		System.out.println(bitSet4.cardinality());
+		roaringBitmap.and(bitSet5);
+		System.out.println(roaringBitmap.cardinality());
+		
+		for (int k = 0; k < 1000000; k++) {
+			colror.get(k).getFirst();
+		}
+
 	}
 
 }

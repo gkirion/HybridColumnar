@@ -1,5 +1,6 @@
 package org.george.chunk;
 
+import java.util.BitSet;
 
 public interface Column<E extends Comparable<E>> {
 
@@ -11,7 +12,23 @@ public interface Column<E extends Comparable<E>> {
 
 	Tuple2<E, Integer> get(int i);
 	
+	BitSet selectEquals(E item);
+	
+	BitSet selectNotEquals(E item);
+	
+	BitSet selectLessThan(E item);
+	
+	BitSet selectLessThanOrEquals(E item);
+	
+	BitSet selectMoreThan(E item);
+	
+	BitSet selectMoreThanOrEquals(E item);
+	
+	BitSet selectBetween(E from, E to);
+	
 	Long sum(int start, int end);
+	
+	Long sum(BitSet bitSet);
 	
 	Integer count(int start, int end);
 	

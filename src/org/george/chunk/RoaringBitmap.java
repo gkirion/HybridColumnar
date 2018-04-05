@@ -2,12 +2,14 @@ package org.george.chunk;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
 
 public class RoaringBitmap implements Serializable {
 	
-	Container[] containers;
-	short[] keys;
-	int size;
+	private Container[] containers;
+	private short[] keys;
+	private int size;
 	private final int INITIAL_CAPACITY = 4;
 	private final int MAX_CAPACITY = 65536;
 	
@@ -15,6 +17,63 @@ public class RoaringBitmap implements Serializable {
 		containers = new Container[INITIAL_CAPACITY];
 		keys = new short[INITIAL_CAPACITY];
 		size = 0;
+	}
+	
+	public RoaringBitmap(BitSet bitSet) {
+		containers = new Container[INITIAL_CAPACITY];
+		keys = new short[INITIAL_CAPACITY];
+		size = 0;
+		for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
+			set(i);
+			if (i == Integer.MAX_VALUE) {
+				break;
+			}
+		}
+	}
+	
+	public void clear() {
+		containers = new Container[INITIAL_CAPACITY];
+		keys = new short[INITIAL_CAPACITY];
+		size = 0;
+	}
+	
+	public void set(int i) {
+		short key = (short)(i / MAX_CAPACITY); // in which container i belongs
+		Container container = getContainer(key);
+		if (container == null) { // if container doesn't exist, create it
+			container = new ContainerArray();
+			//container = new ContainerBitmap();
+			addContainer(key, container);
+		}
+		container.add((short) (i % MAX_CAPACITY));
+		if (container instanceof ContainerArray && container.getCardinality() > 4096) { // container is dense, so convert it to bitmap
+			Container newContainer = ((ContainerArray)container).convertToBitmap();
+			replaceContainer(key, newContainer);
+		}
+	}
+	
+	public void set(int start, int end) {
+		int i = start;
+		while (i < end) {
+			short key = (short)(i / MAX_CAPACITY); // in which container i belongs
+			Container container = getContainer(key);
+			if (container == null) { // if container doesn't exist, create it
+				if (end - start > 512) {
+					container = new ContainerBitmap();
+				}
+				else {
+					container = new ContainerArray();
+				}
+				addContainer(key, container);
+			}
+			int from = Integer.max(key * MAX_CAPACITY, start) % MAX_CAPACITY; // start key inside container
+			int to = Integer.min((key + 1) * MAX_CAPACITY, end) % MAX_CAPACITY; // end key inside container
+			if (to <= from) {
+				to = MAX_CAPACITY;
+			}
+			container.set(from, to);
+			i += (to - from);
+		}
 	}
 	
 	public boolean get(int i) {
@@ -37,25 +96,163 @@ public class RoaringBitmap implements Serializable {
 					to = MAX_CAPACITY;
 				}
 				Container container = containers[i].get(from, to);
-				if (container.getCardinality() == 0) System.out.println(container.getCardinality());
+				//if (container.getCardinality() == 0) System.out.println(container.getCardinality());
 				roaringBitmap.addContainer((short)key, container);
 			}
 		}
 		return roaringBitmap;
 	}
 	
-	public void set(int i) {
-		short key = (short)(i / MAX_CAPACITY); // in which container i belongs
-		Container container = getContainer(key);
-		if (container == null) { // if container doesn't exist, create it
-			container = new ContainerArray();
-			addContainer(key, container);
+	public Container[] getContainers() {
+		return containers;
+	}
+	
+	public short[] getKeys() {
+		return keys;
+	}
+	
+	public int getSize() {
+		return size;
+	}
+	
+	public void or(RoaringBitmap bitmap) {
+		int n1 = getSize();
+		int n2 = bitmap.getSize();
+		short[] keys1 = getKeys();
+		short[] keys2 = bitmap.getKeys();
+		int i = 0, j = 0;
+		Container[] containers2 = bitmap.getContainers();
+		RoaringBitmap newBitmap = new RoaringBitmap(); 
+		while (i < n1 && j < n2) {
+			if ((keys1[i] & 0xFFFF) < (keys2[j] & 0xFFFF)) {
+				newBitmap.addContainer(keys1[i], containers[i]);
+				i++;
+			}
+			else if ((keys1[i] & 0xFFFF) == (keys2[j] & 0xFFFF)) {
+				Container container = containers[i].or(containers2[j].get(0, containers2[j].getLength()));
+				newBitmap.addContainer(keys1[i], container);
+				i++;
+				j++;
+			}
+			else {
+				newBitmap.addContainer(keys2[j], containers2[j].get(0, containers2[j].getLength()));
+				j++;
+			}
 		}
-		container.add((short) (i % MAX_CAPACITY));
-		if (container instanceof ContainerArray && container.getCardinality() > 4096) { // container is dense, so convert it to bitmap
-			Container newContainer = ((ContainerArray)container).convertToBitmap();
-			replaceContainer(key, newContainer);
+		if (i >= n1) {
+			for (int k = j; k < n2; k++) {
+				newBitmap.addContainer(keys2[k], containers2[k].get(0, containers2[k].getLength()));
+			}
 		}
+		else {
+			for (int k = i; k < n1; k++) {
+				newBitmap.addContainer(keys1[k], containers[k]);
+			}
+		}
+		containers = newBitmap.getContainers();
+		keys = newBitmap.getKeys();
+		size = newBitmap.getSize();
+	}
+	
+	public void or(BitSet bitSet) {
+		RoaringBitmap newBitmap = new RoaringBitmap(); 
+		int i = bitSet.nextSetBit(0);
+		int j = 0;
+		while (i >= 0) {
+			int key = (i / MAX_CAPACITY); // in which container i belongs
+			if (j < size && (keys[j] & 0xFFFF) < (key & 0xFFFF)) { // roaring container is smaller, so insert it first
+				newBitmap.addContainer(keys[j], containers[j]);
+				j++;
+			}
+			else if (j < size && (keys[j] & 0xFFFF) == (key & 0xFFFF)) { // containers have the same index, so OR them
+				containers[j] = containers[j].or(bitSet.get(key * MAX_CAPACITY, (key + 1) * MAX_CAPACITY));
+				newBitmap.addContainer(keys[j], containers[j]);
+				i = bitSet.nextSetBit(i + 1);
+				if (i >= 0) {
+					i = Integer.max(i, (key + 1) * MAX_CAPACITY);
+				}
+				j++;
+			}
+			else {  // bitset is smaller, so create a container for it and insert it first
+				Container container = new ContainerBitmap(bitSet.get(key * MAX_CAPACITY, (key + 1) * MAX_CAPACITY));
+				newBitmap.addContainer((short)key, container);
+				i = bitSet.nextSetBit(i + 1);
+				if (i >= 0) {
+					i = Integer.max(i, (key + 1) * MAX_CAPACITY);
+				}
+			}
+			if (i == Integer.MAX_VALUE) {
+				break;
+			}
+		}
+		for (int k = j; k < size; k++) {
+			newBitmap.addContainer(keys[k], containers[k]);
+		}
+		containers = newBitmap.getContainers();
+		keys = newBitmap.getKeys();
+		size = newBitmap.getSize();
+	}
+	
+	public void and(BitSet bitSet) {
+		RoaringBitmap newBitmap = new RoaringBitmap(); 
+		int i = bitSet.nextSetBit(0);
+		while (i >= 0) {
+			int key = (short)(i / MAX_CAPACITY); // in which container i belongs
+			Container container = getContainer((short)key);
+			if (container != null) {
+				container = container.and(bitSet.get(key * MAX_CAPACITY, (key + 1) * MAX_CAPACITY));
+				newBitmap.addContainer((short)key, container);
+			}
+			if (i == Integer.MAX_VALUE) {
+				break;
+			}
+			i = bitSet.nextSetBit(i + 1);
+			if (i >= 0) {
+				i = Integer.max(i, (key + 1) * MAX_CAPACITY);
+			}
+		}
+		containers = newBitmap.getContainers();
+		keys = newBitmap.getKeys();
+		size = newBitmap.getSize();
+	}
+	
+	public void and(RoaringBitmap bitmap) {
+		int n1 = getSize();
+		int n2 = bitmap.getSize();
+		short[] keys1 = getKeys();
+		short[] keys2 = bitmap.getKeys();
+		int i = 0, j = 0;
+		Container[] containers2 = bitmap.getContainers();
+		RoaringBitmap newBitmap = new RoaringBitmap(); 
+		while (i < n1 && j < n2) {
+			if ((keys1[i] & 0xFFFF) < (keys2[j] & 0xFFFF)) {
+				i++;
+			}
+			else if ((keys1[i] & 0xFFFF) == (keys2[j] & 0xFFFF)) {
+				Container container = containers[i].and(containers2[j].get(0, containers2[j].getLength()));
+				newBitmap.addContainer(keys1[i], container);
+				i++;
+				j++;
+			}
+			else {
+				j++;
+			}
+		}
+		containers = newBitmap.getContainers();
+		keys = newBitmap.getKeys();
+		size = newBitmap.getSize();
+	}
+	
+	public BitSet convertToBitSet() {
+		BitSet bitSet = new BitSet();
+		for (int i = 0; i < size; i++) {
+			int key = keys[i] & 0xFFFF;
+			Container container = containers[i];
+			for (int index : container) {
+				bitSet.set(key * MAX_CAPACITY + index);
+			}
+		}
+		return bitSet;
 	}
 	
 	public Container getContainer(short key) {

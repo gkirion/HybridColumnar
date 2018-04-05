@@ -1,28 +1,23 @@
 package org.george.chunk;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeMap;
 import java.io.Serializable;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
 
 public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializable {
 	
-	private TreeMap<Integer, Tuple2<E, Integer>> treeMap;
 	private ArrayList<Tuple3<E, Integer, Integer>> arrayList;
 	private String name;
 	private Integer id;
 	
 	public ColumnRle() {
-		//treeMap = new TreeMap<>();
 		arrayList = new ArrayList<>();
 		name = "";
 		id = 0;
 	}
 	
 	public ColumnRle(String name) {
-		//treeMap = new TreeMap<>();
 		arrayList = new ArrayList<>();
 		this.name = name;
 		id = 0;
@@ -37,12 +32,6 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 	
 	public void add(E item) {
-		/*if (treeMap.lastEntry() != null && treeMap.lastEntry().getValue().getFirst().equals(item)) {
-			treeMap.get(treeMap.lastKey()).setSecond(treeMap.get(treeMap.lastKey()).getSecond() + 1);
-		}
-		else {
-			treeMap.put(id, new Tuple2<E, Integer>(item, 1));
-		}*/
 		int size = arrayList.size();
 		if (size > 0 && arrayList.get(size - 1).getFirst().equals(item)) {
 			arrayList.get(size - 1).setSecond(arrayList.get(size - 1).getSecond() + 1);
@@ -54,19 +43,11 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 	
 	public Tuple2<E, Integer> get(int i) {
-		/*Integer key = treeMap.floorKey(i);
-		if (key == null) {
-			return null;
-		}
-		if (i < key + treeMap.get(key).getSecond()) {
-			return new Tuple2<E, Integer>(treeMap.get(key).getFirst(), key + treeMap.get(key).getSecond() - i);
-		} */
 		int key = find(i, 0, arrayList.size() - 1);
 		if (key == -1) {
 			return null;
 		}
 		return new Tuple2<E, Integer>(arrayList.get(key).getFirst(), arrayList.get(key).getThird() + arrayList.get(key).getSecond() - i);
-		//return null;
 	}
 	
 	protected int find(int i, int left, int right) {
@@ -75,7 +56,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		}
 		int mid = (left + right) / 2;
 		if (arrayList.get(mid).getThird() > i) {
-			return find(i, left, mid -1);
+			return find(i, left, mid - 1);
 		}
 		else if (arrayList.get(mid).getSecond() + arrayList.get(mid).getThird() <= i) {
 			return find(i, mid + 1, right);
@@ -83,16 +64,10 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		else {
 			return mid;
 		}
-		
 	}
 	
 	@Override
 	public int getLength() {
-		/*if (treeMap.isEmpty()) {
-			return 0;
-		}
-		Integer key = treeMap.lastKey();
-		return key + (key == null ? 0 : treeMap.get(key).getSecond());*/
 		if (arrayList.isEmpty()) {
 			return 0;
 		}
@@ -100,14 +75,101 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		return arrayList.get(size - 1).getThird() + arrayList.get(size - 1).getSecond();
 	}
 	
-	public Set<Entry<Integer, Tuple2<E, Integer>>> entrySet() {
-		return treeMap.entrySet();
-		//return arrayList;
+	public String toString() {
+		return arrayList.toString();
 	}
 	
-	public String toString() {
-		//return treeMap.values().toString();
-		return arrayList.toString();
+	@Override
+	public BitSet selectEquals(E item) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().equals(item)) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
+	}
+	
+	@Override
+	public BitSet selectNotEquals(E item) {
+		BitSet bitSet = selectEquals(item);
+		BitSet bSet = new BitSet();
+		bSet.set(0, id); // set all to 1
+		bSet.andNot(bitSet);
+		return bSet;
+	}
+
+	@Override
+	public BitSet selectLessThan(E item) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().compareTo(item) < 0) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
+	}
+
+	@Override
+	public BitSet selectLessThanOrEquals(E item) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().compareTo(item) <= 0) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
+	}
+
+	@Override
+	public BitSet selectMoreThan(E item) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().compareTo(item) > 0) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
+	}
+
+	@Override
+	public BitSet selectMoreThanOrEquals(E item) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().compareTo(item) >= 0) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
+	}
+
+	@Override
+	public BitSet selectBetween(E from, E to) {
+		BitSet bitSet = new BitSet();
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			if (tuple.getFirst().compareTo(from) >= 0 && tuple.getFirst().compareTo(to) <= 0) {
+				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			}
+		}
+		return bitSet;
 	}
 
 	@Override
@@ -115,35 +177,43 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		Long sum = new Long(0);
 		int i = start;
 		Tuple3<E, Integer, Integer> val;
-		//Tuple2<E, Integer> val = get(i);
 		int index = find(start, 0, arrayList.size() - 1);
 		while (i < end) {
 			val = arrayList.get(index);
 			sum += (int)val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
-			//sum += (int)get(i).getFirst() * (i + get(i).getSecond() <= end ? get(i).getSecond() : end - i);
 			i += val.getSecond();
-			//val = treeMap.get(i);
 			index++;
+		}
+		return sum;
+	}
+	
+	@Override
+	public Long sum(BitSet bitSet) {
+		Long sum = new Long(0);
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			sum += (int)tuple.getFirst() * bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
 		}
 		return sum;
 	}
 
 	@Override
 	public Integer count(int start, int end) {
-		return (getLength() < end ? getLength() : end) - start;
+		return (end < id ? end : id) - start;
 	}
 
 	@Override
 	public Double avg(int start, int end) {
-		Long sum = sum(start, end);
-		return sum / (double)count(start, end);
+		return sum(start, end) / (double)count(start, end);
 	}
 
 	@Override
 	public int getCardinality() {
 		HashMap<E, Boolean> distinctMap = new HashMap<>();
-		for (Tuple2<E, Integer> value : treeMap.values()) {
-			distinctMap.put(value.getFirst(), true);
+		for (int i = 0; i < id; i++) {
+			distinctMap.put(arrayList.get(i).getFirst(), true);
 		}
 		return distinctMap.size();
 	}

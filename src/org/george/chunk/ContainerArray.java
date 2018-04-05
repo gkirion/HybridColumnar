@@ -2,8 +2,10 @@ package org.george.chunk;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Iterator;
 
-public class ContainerArray implements Container, Serializable {
+public class ContainerArray implements Container, Iterable<Integer>, Serializable {
 
 	private final int INITIAL_CAPACITY = 4;
 	private final int MAX_CAPACITY = 65536;
@@ -19,15 +21,50 @@ public class ContainerArray implements Container, Serializable {
 		this.array = array;
 		this.cardinality = cardinality;
 	}
+	
+	public short[] getArray() {
+		return array;
+	}
 
 	@Override
 	public void add(short item) {
-		if (array.length <= cardinality) {
-			int newCapacity = array.length < 2048 ? array.length * 2 : (int) (array.length < 16384 ? array.length * 1.5 : Integer.min((int) (array.length * 1.2), MAX_CAPACITY));
+		if (array.length <= cardinality) { // if size is not enough
+			int newCapacity = array.length < 512 ? array.length * 2 : (int) (array.length < 4096 ? array.length * 1.5 : Integer.min((int) (array.length * 1.2), MAX_CAPACITY));
 			array = Arrays.copyOf(array, newCapacity);
 		}
 		array[cardinality] = item;
 		cardinality++;
+	}
+	
+	@Override
+	public void set(int start, int end) {
+		for (int i = start; i < end; i++) {
+			add((short)i);
+		}
+	}
+	
+	@Override
+	public boolean get(short item) {
+		int index = find(0, cardinality - 1, item & 0xFFFF);
+		if (index >= 0) { // item found
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public Container get(int start, int end) {
+		int fromIndex = findGreaterThanOrEqual(0, cardinality - 1, start);
+		int toIndex = findLessThanOrEqual(0, cardinality - 1, end);
+		if (fromIndex < 0 || toIndex < 0) {
+			return new ContainerArray();
+		}
+		if ((array[toIndex] & 0xFFFF) < end) {
+			toIndex++;
+		}
+		short[] newArray = Arrays.copyOfRange(array, fromIndex, toIndex);
+		int newCardinality = toIndex - fromIndex;
+		return new ContainerArray(newArray, newCardinality);
 	}
 	
 	public ContainerBitmap convertToBitmap() {
@@ -36,6 +73,14 @@ public class ContainerArray implements Container, Serializable {
 			newContainer.add(array[i]);
 		}
 		return newContainer;
+	}
+	
+	public BitSet getBitSet(int offset) {
+		BitSet bitSet = new BitSet();
+		for (int i = 0; i < cardinality; i++) {
+			bitSet.set(offset + i);
+		}
+		return bitSet;
 	}
 	
 	protected int find(int left, int right, int key) {
@@ -96,34 +141,6 @@ public class ContainerArray implements Container, Serializable {
 	}
 
 	@Override
-	public boolean get(short i) {
-		int index = find(0, cardinality - 1, i & 0xFFFF);
-		if (index >= 0) {
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public Container get(int start, int end) {
-		int fromIndex = findGreaterThanOrEqual(0, cardinality - 1, start);
-		int toIndex = findLessThanOrEqual(0, cardinality - 1, end);
-		if (fromIndex < 0 || toIndex < 0) {
-			System.out.println(start + " " + end);
-			System.out.println(fromIndex + " " + toIndex);
-			System.out.println("start: " + (array[0] & 0xFFFF));
-			System.out.println("end: " + (array[cardinality - 1] & 0xFFFF));
-			return new ContainerArray();
-		}
-		if ((array[toIndex] & 0xFFFF) < end) {
-			toIndex++;
-		}
-		short[] newArray = Arrays.copyOfRange(array, fromIndex, toIndex);
-		int newCardinality = toIndex - fromIndex;
-		return new ContainerArray(newArray, newCardinality);
-	}
-
-	@Override
 	public int getCardinality() {
 		return cardinality;
 	}
@@ -131,6 +148,176 @@ public class ContainerArray implements Container, Serializable {
 	@Override
 	public int getSize() {
 		return cardinality;
+	}
+	
+	@Override
+	public Container or(Container container) {
+		if (container instanceof ContainerArray) {
+			return or((ContainerArray)container);
+		}
+		else {
+			return or((ContainerBitmap)container);
+		}
+	}
+
+	@Override
+	public Container and(Container container) {
+		if (container instanceof ContainerArray) {
+			return and((ContainerArray)container);
+		}
+		else {
+			return and((ContainerBitmap)container);
+		}
+	}
+
+	@Override
+	public Container or(ContainerBitmap containerBitmap) {
+		BitSet bitSet = (BitSet)containerBitmap.getBitSet().clone();
+		for (int i = 0; i < cardinality; i++) {
+			bitSet.set(array[i] & 0xFFFF);
+		}
+		return new ContainerBitmap(bitSet);
+	}
+
+	@Override
+	public Container or(ContainerArray containerArray) {
+		int n1 = getSize();
+		int n2 = containerArray.getSize();
+		short[] array2 = containerArray.getArray();
+		short[] newArray = new short[n1 + n2];
+		int i = 0, j = 0, z = 0;
+		while (i < n1 && j < n2) {
+			if ((array[i] & 0xFFFF) < (array2[j] & 0xFFFF)) {
+				newArray[z] = array[i];
+				i++;
+			}
+			else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
+				newArray[z] = array[i];
+				i++;
+				j++;
+			}
+			else {
+				newArray[z] = array2[j];
+				j++;
+			}
+			z++;
+		}
+		if (i >= n1) {
+			for (int k = j; k < n2; k++) {
+				newArray[z] = array2[k];
+				z++;
+			}
+		}
+		else {
+			for (int k = i; k < n1; k++) {
+				newArray[z] = array[k];
+				z++;
+			}
+		}
+		array = newArray;
+		cardinality = z;
+		return this;
+	}
+	
+	@Override
+	public Container or(BitSet bitSet) {
+		BitSet bSet = (BitSet)bitSet.clone();
+		for (int i = 0; i < cardinality; i++) {
+			bSet.set(array[i] & 0xFFFF);
+		}
+		return new ContainerBitmap(bSet);
+	}
+
+	@Override
+	public Container and(ContainerBitmap containerBitmap) {
+		BitSet bitSet = containerBitmap.getBitSet();
+		int n = getSize();
+		short[] array2 = new short[n];
+		int k = 0;
+		for (int i = 0; i < n; i++) {
+			if (bitSet.get(array[i] & 0xFFFF)) {
+				array2[k] = array[i];
+				k++;
+			}
+		}
+		array = array2;
+		cardinality = k;
+		return this;
+	}
+
+	@Override
+	public Container and(ContainerArray containerArray) {
+		int n1 = getSize();
+		int n2 = containerArray.getSize();
+		short[] array2 = containerArray.getArray();
+		short[] newArray = new short[n1];
+		int i = 0, j = 0, z = 0;
+		while (i < n1 && j < n2) {
+			if ((array[i] & 0xFFFF) < (array2[j] & 0xFFFF)) {
+				i++;
+			}
+			else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
+				newArray[z] = array[i];
+				i++;
+				j++;
+				z++;
+			}
+			else {
+				j++;
+			}
+		}
+		array = newArray;
+		cardinality = z;
+		return this;
+	}
+	
+	@Override
+	public Container and(BitSet bitSet) {
+		BitSet newBitSet = new BitSet();
+		for (int i = 0; i < cardinality; i++) {
+			if (bitSet.get(array[i] & 0xFFFF)) {
+				newBitSet.set(array[i] & 0xFFFF);
+			}
+		}
+		return new ContainerBitmap(newBitSet);
+	}
+
+	@Override
+	public void clear() {
+		array = new short[INITIAL_CAPACITY];
+		cardinality = 0;
+	}
+
+	@Override
+	public int getLength() {
+		return (array[cardinality - 1] & 0xFFFF) + 1;
+	}
+
+	@Override
+	public Iterator<Integer> iterator() {
+		return new ContainerArrayIterator();
+	}
+	
+	private class ContainerArrayIterator implements Iterator<Integer> {
+		
+		private int index;
+		
+		public ContainerArrayIterator() {
+			index = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return index < cardinality;
+		}
+
+		@Override
+		public Integer next() {
+			int value = array[index] & 0xFFFF;
+			index++;
+			return value;
+		}
+		
 	}
 
 }

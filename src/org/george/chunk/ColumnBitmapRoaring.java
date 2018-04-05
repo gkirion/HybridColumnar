@@ -1,7 +1,9 @@
 package org.george.chunk;
 
 import java.io.Serializable;
+import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Set;
 
 public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, Serializable {
 	
@@ -49,12 +51,105 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 		}
 		return null;
 	}
+	
+	@Override
+	public BitSet selectEquals(E item) {
+		for (E value : mappings.keySet()) {
+			if (value.equals(item)) {
+				return mappings.get(value).convertToBitSet();
+				//return mappings.get(value);
+			}
+		}
+		return new BitSet();
+	}
+	
+	@Override
+	public BitSet selectNotEquals(E item) {
+		BitSet bitSet = selectEquals(item);
+		BitSet bSet = new BitSet();
+		bSet.set(0, id); // set all to 1
+		bSet.andNot(bitSet);
+		return bSet;
+	}
+	
+	@Override
+	public BitSet selectLessThan(E item) {
+		RoaringBitmap bitmap = new RoaringBitmap();
+		for (E value : mappings.keySet()) {
+			if (value.compareTo(item) < 0) {
+				bitmap.or(mappings.get(value));
+			}
+		}
+		return bitmap.convertToBitSet();
+	}
+
+	@Override
+	public BitSet selectLessThanOrEquals(E item) {
+		RoaringBitmap bitmap = new RoaringBitmap();
+		for (E value : mappings.keySet()) {
+			if (value.compareTo(item) <= 0) {
+				bitmap.or(mappings.get(value));
+			}
+		}
+		return bitmap.convertToBitSet();
+	}
+
+	@Override
+	public BitSet selectMoreThan(E item) {
+		RoaringBitmap bitmap = new RoaringBitmap();
+		for (E value : mappings.keySet()) {
+			if (value.compareTo(item) > 0) {
+				bitmap.or(mappings.get(value));
+			}
+		}
+		return bitmap.convertToBitSet();
+	}
+
+	@Override
+	public BitSet selectMoreThanOrEquals(E item) {
+		RoaringBitmap bitmap = new RoaringBitmap();
+		for (E value : mappings.keySet()) {
+			if (value.compareTo(item) >= 0) {
+				bitmap.or(mappings.get(value));
+			}
+		}
+		return bitmap.convertToBitSet();
+	}
+
+	@Override
+	public BitSet selectBetween(E from, E to) {
+		RoaringBitmap bitmap = new RoaringBitmap();
+		for (E value : mappings.keySet()) {
+			if (value.compareTo(from) >= 0 && value.compareTo(to) <= 0) {
+				bitmap.or(mappings.get(value));
+			}
+		}
+		return bitmap.convertToBitSet();
+	}
 
 	@Override
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
+		if (end - start == 1) {
+			sum += (int)get(start).getFirst() * get(start).getSecond();
+			return sum;
+		}
 		for (E item : mappings.keySet()) {
 			sum += (int)item * mappings.get(item).get(start, end).cardinality();
+		}
+		return sum;
+	}
+	
+	@Override
+	public Long sum(BitSet bitSet) {
+		Long sum = new Long(0);
+		RoaringBitmap bitmap = new RoaringBitmap();
+		Set<E> values = mappings.keySet();
+		for (E value : values) {
+			bitmap.or(mappings.get(value));
+			bitmap.and(bitSet);
+			sum += (int)value * bitmap.cardinality();
+			bitmap.clear();
 		}
 		return sum;
 	}
