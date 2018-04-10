@@ -542,6 +542,14 @@ public class ChunkDriver {
 			colror.get(k).getFirst();
 		}
 
+		Dictionary<String> dict = new Dictionary<>();
+		System.out.println(dict.insert("george"));
+		System.out.println(dict.insert("gkirion"));
+		System.out.println(dict.insert("mpempis"));
+		System.out.println(dict.insert("george"));
+		System.out.println(dict.get(0));
+		System.out.println(dict.get(2));
+
 	}
 
 }
