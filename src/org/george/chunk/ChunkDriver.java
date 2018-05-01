@@ -415,29 +415,29 @@ public class ChunkDriver {
 		System.out.println(colror.sum(0, colror.getLength()));
 
 		start = Instant.now();
-		colplain.selectLessThan(4);
+		colplain.select(e -> e > 4 && e <= 11);
 		end = Instant.now();
 		duration = Duration.between(start, end);
 		System.out.println("PLAIN SELECT: " + duration.toMillis() + " ms");
-		System.out.println(colplain.selectLessThan(4).cardinality());
+		System.out.println(colplain.select(e -> e > 4 && e <= 11).cardinality());
 		start = Instant.now();
-		colrle.selectLessThan(4);
+		colrle.select(e -> e > 4 && e <= 11);
 		end = Instant.now();
 		duration = Duration.between(start, end);
 		System.out.println("RLE SELECT: " + duration.toMillis() + " ms");
-		System.out.println(colrle.selectLessThan(4).cardinality());
+		System.out.println(colrle.select(e -> e > 4 && e <= 11).cardinality());
 		start = Instant.now();
-		colbit.selectLessThan(4);
+		colbit.select(e -> e > 4 && e <= 11);
 		end = Instant.now();
 		duration = Duration.between(start, end);
 		System.out.println("BITSET SELECT: " + duration.toMillis() + " ms");
-		System.out.println(colbit.selectLessThan(4).cardinality());
+		System.out.println(colbit.select(e -> e > 4 && e <= 11).cardinality());
 		start = Instant.now();
-		colror.selectLessThan(4);
+		colror.select(e -> e > 4 && e <= 11);
 		end = Instant.now();
 		duration = Duration.between(start, end);
 		System.out.println("ROARING SELECT: " + duration.toMillis() + " ms");
-		System.out.println(colror.selectLessThan(4).cardinality());
+		System.out.println(colror.select(e -> e > 4 && e <= 11).cardinality());
 		
 		
 		BitSet bSet = colplain.selectLessThan(4);
@@ -550,6 +550,11 @@ public class ChunkDriver {
 		System.out.println(dict.get(0));
 		System.out.println(dict.get(2));
 
+		Chunk1<Integer> chunk1 = new Chunk1<Integer>(""), chunk2 = new Chunk1<Integer>("");
+		chunk1.add(44);
+		chunk1.add(21);
+		chunk1.add(80);
+		
 	}
 
 }

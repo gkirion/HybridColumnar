@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.Iterator;
 
-public class ContainerBitmap implements Container, Iterable<Integer>, Serializable {
+public class ContainerBitmap implements Container, Serializable {
 	
 	private BitSet bitSet;
 	
@@ -15,17 +15,9 @@ public class ContainerBitmap implements Container, Iterable<Integer>, Serializab
 	public ContainerBitmap(BitSet bitSet) {
 		this.bitSet = bitSet;
 	}
-	
-	public BitSet getBitSet(int offset) {
-		BitSet bSet = new BitSet();
-		for (int i = bitSet.nextSetBit(0); i >= 0; i = bitSet.nextSetBit(i + 1)) {
-			bSet.set(offset + i);
-		}
-		return bSet;
-	}
 
 	@Override
-	public void add(short item) {
+	public void set(int item) {
 		bitSet.set(item & 0xFFFF);
 	}
 	
@@ -35,7 +27,7 @@ public class ContainerBitmap implements Container, Iterable<Integer>, Serializab
 	}
 
 	@Override
-	public boolean get(short i) {
+	public boolean get(int i) {
 		return bitSet.get(i & 0xFFFF);
 	}
 	
@@ -44,20 +36,10 @@ public class ContainerBitmap implements Container, Iterable<Integer>, Serializab
 		return new ContainerBitmap(bitSet.get(start, end));
 	}
 
-	@Override
-	public int getCardinality() {
-		return bitSet.cardinality();
-	}
-
-	@Override
-	public int getSize() {
-		return bitSet.length();
-	}
-	
 	public BitSet getBitSet() {
 		return bitSet;
 	}
-	
+
 	@Override
 	public Container or(Container container) {
 		if (container instanceof ContainerArray) {
@@ -128,13 +110,23 @@ public class ContainerBitmap implements Container, Iterable<Integer>, Serializab
 	}
 
 	@Override
-	public void clear() {
-		bitSet.clear();
+	public int getCardinality() {
+		return bitSet.cardinality();
+	}
+
+	@Override
+	public int getSize() {
+		return bitSet.cardinality();
 	}
 
 	@Override
 	public int getLength() {
 		return bitSet.length();
+	}
+
+	@Override
+	public void clear() {
+		bitSet.clear();
 	}
 
 	@Override

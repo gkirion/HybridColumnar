@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.function.Predicate;
 
 public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializable {
 	
@@ -50,6 +51,26 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	
 	public String toString() {
 		return arrayList.toString();
+	}
+
+	public Column<E> filter(Predicate<E> predicate) {
+		ColumnPlain<E> newColumn = new ColumnPlain<>();
+		for (E value : arrayList) {
+			if (predicate.test(value)) {
+				newColumn.add(value);
+			}
+		}
+		return newColumn;
+	}
+
+	public BitSet select(Predicate<E> predicate) {
+		BitSet bitSet = new BitSet();
+		for (int i = 0; i < id; i++) {
+			if (predicate.test(arrayList.get(i))) {
+				bitSet.set(i);
+			}
+		}
+		return bitSet;
 	}
 	
 	@Override
@@ -127,22 +148,27 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		return bitSet;
 	}
 
+	public Long sum() {
+		Long sum = new Long(0);
+		for (E value : arrayList) {
+			sum += (Integer)value;
+		}
+		return sum;
+	}
+
+	public Integer count() {
+		return arrayList.size();
+	}
+
+	public Double avg() {
+		return sum() / count().doubleValue();
+	}
+
 	@Override
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		for (int i = start; i < end; i++) {
 			sum += (Integer)arrayList.get(i);
-		}
-		return sum;
-	}
-	
-	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
-		for (int i = 0; i < id; i++) {
-			if (bitSet.get(i)) {
-				sum += (Integer)arrayList.get(i);
-			}
 		}
 		return sum;
 	}
@@ -155,6 +181,17 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double)count(start, end);
+	}
+	
+	@Override
+	public Long sum(BitSet bitSet) {
+		Long sum = new Long(0);
+		for (int i = 0; i < id; i++) {
+			if (bitSet.get(i)) {
+				sum += (Integer)arrayList.get(i);
+			}
+		}
+		return sum;
 	}
 
 	@Override

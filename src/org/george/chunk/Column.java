@@ -1,6 +1,7 @@
 package org.george.chunk;
 
 import java.util.BitSet;
+import java.util.function.Predicate;
 
 public interface Column<E extends Comparable<E>> {
 
@@ -11,6 +12,8 @@ public interface Column<E extends Comparable<E>> {
 	void add(E item);
 
 	Tuple2<E, Integer> get(int i);
+
+	BitSet select(Predicate<E> predicate);
 	
 	BitSet selectEquals(E item);
 	

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class ColumnDictionaryBitmap <E extends Comparable<E>> implements Column<E>, Serializable {
 
@@ -23,6 +24,13 @@ public class ColumnDictionaryBitmap <E extends Comparable<E>> implements Column<
         mappings = new HashMap<>();
         dictionary = new Dictionary<>();
         this.name = name;
+        id = 0;
+    }
+
+    public ColumnDictionaryBitmap(Dictionary<E> dictionary) {
+        mappings = new HashMap<>();
+        this.dictionary = dictionary;
+        name = "";
         id = 0;
     }
 
@@ -49,6 +57,30 @@ public class ColumnDictionaryBitmap <E extends Comparable<E>> implements Column<
             }
         }
         return null;
+    }
+
+    private void add(Integer key, BitSet bitSet) {
+        mappings.put(key, bitSet);
+    }
+
+    public Column<E> filter(Predicate<E> predicate) {
+        ColumnDictionaryBitmap<E> newColumn = new ColumnDictionaryBitmap<>(dictionary);
+        for (Integer value : mappings.keySet()) {
+            if (predicate.test(dictionary.get(value))) {
+                newColumn.add(value, mappings.get(value));
+            }
+        }
+        return newColumn;
+    }
+
+    public BitSet select(Predicate<E> predicate) {
+        BitSet bSet = new BitSet();
+        for (Integer value : mappings.keySet()) {
+            if (predicate.test(dictionary.get(value))) {
+                bSet.or(mappings.get(value));
+            }
+        }
+        return bSet;
     }
 
     @Override

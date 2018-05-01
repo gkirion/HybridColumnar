@@ -4,23 +4,13 @@ import java.util.BitSet;
 
 public interface Container extends Iterable<Integer> {
 	
-	void add(short item);
+	void set(int item);
 	
 	void set(int start, int end);
 	
-	boolean get(short i);
-	
-	BitSet getBitSet(int offset);
-	
-	Container get(int start, int end);
-	
-	int getCardinality();
+	boolean get(int i);
 
-	int getSize();
-	
-	int getLength();
-	
-	void clear();
+	Container get(int start, int end);
 	
 	Container or(Container container);
 	
@@ -37,5 +27,13 @@ public interface Container extends Iterable<Integer> {
 	Container and(ContainerArray containerArray);
 	
 	Container and(BitSet bitSet);
+
+	int getCardinality();
+
+	int getSize();
+
+	int getLength();
+
+	void clear();
 
 }

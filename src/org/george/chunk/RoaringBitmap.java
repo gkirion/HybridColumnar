@@ -7,8 +7,8 @@ import java.util.HashMap;
 
 public class RoaringBitmap implements Serializable {
 	
-	private Container[] containers;
 	private short[] keys;
+	private Container[] containers;
 	private int size;
 	private final int INITIAL_CAPACITY = 4;
 	private final int MAX_CAPACITY = 65536;
@@ -31,12 +31,6 @@ public class RoaringBitmap implements Serializable {
 		}
 	}
 	
-	public void clear() {
-		containers = new Container[INITIAL_CAPACITY];
-		keys = new short[INITIAL_CAPACITY];
-		size = 0;
-	}
-	
 	public void set(int i) {
 		short key = (short)(i / MAX_CAPACITY); // in which container i belongs
 		Container container = getContainer(key);
@@ -45,7 +39,7 @@ public class RoaringBitmap implements Serializable {
 			//container = new ContainerBitmap();
 			addContainer(key, container);
 		}
-		container.add((short) (i % MAX_CAPACITY));
+		container.set(i % MAX_CAPACITY);
 		if (container instanceof ContainerArray && container.getCardinality() > 4096) { // container is dense, so convert it to bitmap
 			Container newContainer = ((ContainerArray)container).convertToBitmap();
 			replaceContainer(key, newContainer);
@@ -82,7 +76,7 @@ public class RoaringBitmap implements Serializable {
 		if (container == null) {
 			return false;
 		}
-		return container.get((short)(i % MAX_CAPACITY));
+		return container.get(i % MAX_CAPACITY);
 	}
 	
 	public RoaringBitmap get(int start, int end) {
@@ -253,6 +247,12 @@ public class RoaringBitmap implements Serializable {
 			}
 		}
 		return bitSet;
+	}
+
+	public void clear() {
+		containers = new Container[INITIAL_CAPACITY];
+		keys = new short[INITIAL_CAPACITY];
+		size = 0;
 	}
 	
 	public Container getContainer(short key) {

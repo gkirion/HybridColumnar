@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.function.Predicate;
 
 public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, Serializable {
 
@@ -23,6 +24,13 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
         arrayList = new ArrayList<>();
         dictionary = new Dictionary<>();
         this.name = name;
+        id = 0;
+    }
+
+    public ColumnDictionaryRle(Dictionary<E> dictionary) {
+        arrayList = new ArrayList<>();
+        this.dictionary = dictionary;
+        name = "";
         id = 0;
     }
 
@@ -80,6 +88,30 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 
     public String toString() {
         return arrayList.toString();
+    }
+
+    private void add(Tuple3<Integer, Integer, Integer> tuple) {
+        arrayList.add(tuple);
+    }
+
+    public Column<E> filter(Predicate<E> predicate) {
+        ColumnDictionaryRle<E> newColumn = new ColumnDictionaryRle<>(dictionary);
+        for (Tuple3<Integer, Integer, Integer> value : arrayList) { // for each value of column
+            if (predicate.test(dictionary.get(value.getFirst()))) { // if value matches predicate
+                newColumn.add(value); // insert it into new column
+            }
+        }
+        return newColumn;
+    }
+
+    public BitSet select(Predicate<E> predicate) {
+        BitSet bitSet = new BitSet();
+        for (Tuple3<Integer, Integer, Integer> tuple : arrayList) {
+            if (predicate.test(dictionary.get(tuple.getFirst()))) {
+                bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+            }
+        }
+        return bitSet;
     }
 
     @Override

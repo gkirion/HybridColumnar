@@ -1,5 +1,7 @@
 package org.george.chunk;
 
+import jdk.nashorn.internal.codegen.types.ArrayType;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -62,6 +64,23 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 	
 	public Column<T> getFirstColumn() {
 		return col;
+	}
+
+	public ArrayList<ArrayList<Tuple2<Integer, Integer>>> join(Chunk1<T> otherChunk) {
+		ArrayList<Tuple2<Integer, Integer>> thisPositions = new ArrayList<>();
+		ArrayList<Tuple2<Integer, Integer>> otherPositions = new ArrayList<>();
+		for (Tuple3<T, Integer, Integer> row : this) {
+			for (Tuple3<T, Integer, Integer> otherRow : otherChunk) {
+				if (row.getFirst().equals(otherRow.getFirst())) {
+					thisPositions.add(new Tuple2<Integer, Integer>(row.getSecond(), row.getSecond() + row.getThird()));
+					otherPositions.add(new Tuple2<Integer, Integer>(otherRow.getSecond(), otherRow.getSecond() + otherRow.getThird()));
+				}
+			}
+		}
+		ArrayList<ArrayList<Tuple2<Integer, Integer>>> result = new ArrayList<>();
+		result.add(thisPositions);
+		result.add(otherPositions);
+		return result;
 	}
 	
 	public String toString() {

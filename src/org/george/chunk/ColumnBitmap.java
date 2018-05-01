@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Serializable {
 
@@ -47,7 +48,31 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 		}
 		return null;
 	}
-	
+
+	private void add(E key, BitSet bitSet) {
+		mappings.put(key, bitSet);
+	}
+
+	public Column<E> filter(Predicate<E> predicate) {
+		ColumnBitmap<E> newColumn = new ColumnBitmap<>();
+		for (E value : mappings.keySet()) {
+			if (predicate.test(value)) {
+				newColumn.add(value, mappings.get(value));
+			}
+		}
+		return newColumn;
+	}
+
+	public BitSet select(Predicate<E> predicate) {
+		BitSet bSet = new BitSet();
+		for (E value : mappings.keySet()) {
+			if (predicate.test(value)) {
+				bSet.or(mappings.get(value));
+			}
+		}
+		return bSet;
+	}
+
 	@Override
 	public BitSet selectEquals(E item) {
 		Set<E> values = mappings.keySet();

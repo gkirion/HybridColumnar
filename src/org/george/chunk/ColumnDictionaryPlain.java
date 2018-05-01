@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.function.Predicate;
 
 public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>, Serializable {
 
@@ -60,6 +61,26 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
         }
         sb.append("]");
         return arrayList.toString();
+    }
+
+    public Column<E> filter(Predicate<E> predicate) {
+        ColumnDictionaryPlain<E> newColumn = new ColumnDictionaryPlain<>();
+        for (Integer value : arrayList) {
+            if (predicate.test(dictionary.get(value))) {
+                newColumn.add(dictionary.get(value));
+            }
+        }
+        return newColumn;
+    }
+
+    public BitSet select(Predicate<E> predicate) {
+        BitSet bitSet = new BitSet();
+        for (int i = 0; i < id; i++) {
+            if (predicate.test(dictionary.get(arrayList.get(i)))) {
+                bitSet.set(i);
+            }
+        }
+        return bitSet;
     }
 
     @Override
