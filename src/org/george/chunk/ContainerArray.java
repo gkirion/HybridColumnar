@@ -134,22 +134,58 @@ public class ContainerArray implements Container, Serializable {
 	
 	@Override
 	public Container or(Container container) {
-		if (container instanceof ContainerArray) {
+		/*if (container instanceof ContainerArray) {
 			return or((ContainerArray)container);
 		}
 		else {
 			return or((ContainerBitmap)container);
+		}*/
+		Container container3 = new ContainerBitmap();
+		Iterator<Integer> iterator1 = this.iterator();
+		Iterator<Integer> iterator2 = container.iterator();
+		while (iterator1.hasNext() && iterator2.hasNext()) {
+			int val1 = iterator1.next();
+			int val2 = iterator2.next();
+			if (val1 < val2) {
+				container3.set(val1);
+				container3.set(val2);
+			}
+			else if (val1 > val2) {
+				container3.set(val2);
+				container3.set(val1);
+			}
+			else {
+				container3.set(val1);
+			}
 		}
+		if (iterator1.hasNext()) {
+			while (iterator1.hasNext()) {
+				container3.set(iterator1.next());
+			}
+		}
+		else {
+			while (iterator2.hasNext()) {
+				container3.set(iterator2.next());
+			}
+		}
+		return container3;
 	}
 
 	@Override
 	public Container and(Container container) {
-		if (container instanceof ContainerArray) {
+		/*if (container instanceof ContainerArray) {
 			return and((ContainerArray)container);
 		}
 		else {
 			return and((ContainerBitmap)container);
+		}*/
+		Container container3 = new ContainerArray();
+		for (Integer element : this) {
+			if (container.get(element)) {
+				container3.set(element);
+			}
 		}
+		return container3;
 	}
 
 	@Override

@@ -304,7 +304,7 @@ public class ChunkDriver {
 			num = rand.nextInt(100);
 			arrint.add(num);
 		}
-		arrint.sort(null);
+		arrint.sort((a, b) -> a.compareTo(b) * (-1));
 		for (int k = 0; k < 1000000; k++) {
 			//num = rand.nextInt(100);
 			num = arrint.get(k);
@@ -313,6 +313,9 @@ public class ChunkDriver {
 			colplain.add(num);
 			colror.add(num);
 		}
+		System.out.println(arrint.get(0));
+		System.out.println(arrint.get(1));
+		System.out.println(arrint.get(2));
 
 		//System.out.println(colbit.getCardinality());
 		System.out.println("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
@@ -554,7 +557,6 @@ public class ChunkDriver {
 		chunk1.add(44);
 		chunk1.add(21);
 		chunk1.add(80);
-		
 	}
 
 }
