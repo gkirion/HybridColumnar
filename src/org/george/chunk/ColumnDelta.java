@@ -2,6 +2,7 @@ package org.george.chunk;
 
 import java.io.Serializable;
 import java.util.BitSet;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ColumnDelta implements Column<Integer>, Serializable {
@@ -123,6 +124,36 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	public int getCardinality() {
 		// TODO Auto-generated method stub
 		return 0;
-	} 
+	}
+
+	@Override
+	public Iterator<Integer> iterator() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	private class ColumnDeltaIterator implements Iterator<Integer> {
+		
+		private int i;
+		private int value;
+		
+		public ColumnDeltaIterator() {
+			i = 0;
+			value = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < id;
+		}
+
+		@Override
+		public Integer next() {
+			value += bitPacking.get(i);
+			i++;
+			return value;
+		}
+		
+	}
 
 }

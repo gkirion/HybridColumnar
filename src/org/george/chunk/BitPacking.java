@@ -1,7 +1,9 @@
 package org.george.chunk;
+import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Iterator;
 
-public class BitPacking {
+public class BitPacking implements Iterable<Integer>, Serializable {
 	
 	private int[] array;
 	private int index;
@@ -59,6 +61,33 @@ public class BitPacking {
 	
 	public boolean isEmpty() {
 		return index == 0;
+	}
+
+	@Override
+	public Iterator<Integer> iterator() {
+		return new BitPackingIterator();
+	}
+	
+	private class BitPackingIterator implements Iterator<Integer> {
+		
+		private int i;
+		
+		public BitPackingIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < index;
+		}
+
+		@Override
+		public Integer next() {
+			Integer value = get(i);
+			i++;
+			return value;
+		}
+		
 	}
 
 }
