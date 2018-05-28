@@ -66,15 +66,11 @@ public class ContainerBitmap implements Container, Serializable {
 				container3.set(val1);
 			}
 		}
-		if (iterator1.hasNext()) {
-			while (iterator1.hasNext()) {
-				container3.set(iterator1.next());
-			}
+		while (iterator1.hasNext()) {
+			container3.set(iterator1.next());
 		}
-		else {
-			while (iterator2.hasNext()) {
-				container3.set(iterator2.next());
-			}
+		while (iterator2.hasNext()) {
+			container3.set(iterator2.next());
 		}
 		return container3;
 	}

@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.function.Predicate;
 
-public class ColumnDelta implements Serializable {
+public class ColumnDelta implements Column<Integer>, Serializable {
 	
 	private BitPacking bitPacking;
 	private String name;
@@ -40,18 +40,19 @@ public class ColumnDelta implements Serializable {
 		return name;
 	}
 
-	public void add(int item) {
+	public void add(Integer item) {
 		bitPacking.add(item - last);
 		last = item;
 		id++;
 	}
 
-	public int get(int i) {
+	@Override
+	public Tuple2<Integer, Integer> get(int i) {
 		int value = 0;
 		for (int j = 0; j <= i; j++) {
 			value += bitPacking.get(j);
 		}
-		return value;
+		return new Tuple2<>(value, 1);
 	}
 
 	public BitSet select(Predicate<Integer> predicate) {

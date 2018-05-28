@@ -557,6 +557,7 @@ public class ChunkDriver {
 		chunk1.add(44);
 		chunk1.add(21);
 		chunk1.add(80);
+		chunk1 = new Chunk1<Integer>(new ColumnDelta());
 	}
 
 }

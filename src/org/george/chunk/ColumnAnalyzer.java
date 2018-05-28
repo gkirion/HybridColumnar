@@ -7,6 +7,7 @@ import java.util.HashMap;
 public class ColumnAnalyzer<E> implements Serializable {
 	
 	private ArrayList<E> arrayList;
+	private E type;
 	
 	public ColumnAnalyzer() {
 		arrayList = new ArrayList<>();
@@ -71,10 +72,10 @@ public class ColumnAnalyzer<E> implements Serializable {
 		int previous = 0;
 		int maxDelta = 0;
 		for (E value : arrayList) {
-			if (((int)value - previous) > maxDelta) {
-				maxDelta = (int)value - previous;
+			if (((Integer)value - previous) > maxDelta) {
+				maxDelta = (Integer) value - previous;
 			}
-			previous = (int)value;
+			previous = (Integer) value;
 		}
 		return maxDelta;
 	}
@@ -83,12 +84,19 @@ public class ColumnAnalyzer<E> implements Serializable {
 		int previous = 0;
 		int minDelta = 0;
 		for (E value : arrayList) {
-			if (((int)value - previous) < minDelta) {
-				minDelta = (int)value - previous;
+			if (((Integer)value - previous) < minDelta) {
+				minDelta = (Integer) value - previous;
 			}
-			previous = (int)value;
+			previous = (Integer) value;
 		}
 		return minDelta;
+	}
+
+	public E dummy() {
+		if (this.type instanceof Integer) {
+
+		}
+		return arrayList.get(0);
 	}
 
 }
