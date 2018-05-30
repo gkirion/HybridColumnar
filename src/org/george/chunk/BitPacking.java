@@ -26,7 +26,12 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 		length = 4;
 		array = new int[length];
 		index = 0;
-		this.dataSize = dataSize;
+		for (int i = dataSize; i <= CELL_SIZE; i++) {
+			if (CELL_SIZE % i == 0) {
+				this.dataSize = i;
+				break;
+			}
+		}
 		MASK = (int)Math.pow(2, dataSize) - 1;
 		NUMBER_CELLS = CELL_SIZE / dataSize;
 	}
