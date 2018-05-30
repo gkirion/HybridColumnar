@@ -26,7 +26,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 		length = 4;
 		array = new int[length];
 		index = 0;
-		this.dataSize = dataSize + dataSize % 2;
+		this.dataSize = dataSize;
 		MASK = (int)Math.pow(2, dataSize) - 1;
 		NUMBER_CELLS = CELL_SIZE / dataSize;
 	}
@@ -45,7 +45,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 		index++;
 	}
 	
-	public int get(int i) {
+	public Integer get(int i) {
 		int arrayIndex = i >> (CELL_SIZE - Integer.numberOfLeadingZeros(NUMBER_CELLS) - 1); // i / NUMBER_CELLS
 		int cellIndex = i & (NUMBER_CELLS - 1); // i % NUMBER_CELLS
 		int mask = MASK;

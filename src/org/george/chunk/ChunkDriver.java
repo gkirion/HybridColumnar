@@ -558,6 +558,27 @@ public class ChunkDriver {
 		chunk1.add(21);
 		chunk1.add(80);
 		chunk1 = new Chunk1<Integer>(new ColumnDelta());
+		ColumnAnalyzer<Integer> anal = new ColumnAnalyzer<>();
+		anal.add(5);
+		anal.add(8);
+		anal.add(4);
+		System.out.println("max delta: " + anal.maxDelta());
+		System.out.println("min delta: " + anal.minDelta());
+		ColumnDelta delta = new ColumnDelta(anal.maxDelta()- anal.minDelta() + 1, anal.minDelta() * (-1));
+		ColumnPlain<Integer> plain = new ColumnPlain<>();
+		delta.add(5);
+		delta.add(8);
+		delta.add(4);
+		
+		plain.add(5);
+		plain.add(8);
+		plain.add(4);
+		for (int i1 = 0; i1 < delta.getLength(); i1++) {
+			System.out.println(delta.get(i1));
+			if (!delta.get(i1).equals(plain.get(i1))) {
+				System.out.println("NOT OK");
+			}
+		}
 	}
 
 }
