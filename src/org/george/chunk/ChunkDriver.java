@@ -564,19 +564,29 @@ public class ChunkDriver {
 		anal.add(4);
 		System.out.println("max delta: " + anal.maxDelta());
 		System.out.println("min delta: " + anal.minDelta());
-		ColumnDelta delta = new ColumnDelta(anal.maxDelta()- anal.minDelta() + 1, anal.minDelta() * (-1));
+		ColumnDelta delta = new ColumnDelta(anal.maxDelta()- anal.minDelta() + 1 + 200, (anal.minDelta() - 99) * (-1));
 		ColumnPlain<Integer> plain = new ColumnPlain<>();
 		delta.add(5);
 		delta.add(8);
 		delta.add(4);
+		delta.add(4);
+
 		
 		plain.add(5);
 		plain.add(8);
 		plain.add(4);
+		plain.add(4);
+		
+		for (int i1 = 0; i1 < 1000; i1++) {
+			num = rand.nextInt(100);
+			delta.add(num);
+			plain.add(num);
+		}
+
 		for (int i1 = 0; i1 < delta.getLength(); i1++) {
-			System.out.println(delta.get(i1));
+			
 			if (!delta.get(i1).equals(plain.get(i1))) {
-				System.out.println("NOT OK");
+				System.out.println("NOT OK: " + delta.get(i1) + " " + plain.get(i1));
 			}
 		}
 	}
