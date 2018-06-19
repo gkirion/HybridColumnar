@@ -4,6 +4,7 @@ import java.util.BitSet;
 import java.util.function.Predicate;
 
 public interface Column<E extends Comparable<E>> {
+	
 
 	void setName(String name);
 

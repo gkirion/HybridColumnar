@@ -91,6 +91,10 @@ public class ColumnAnalyzer<E> implements Serializable {
 		}
 		return minDelta;
 	}
+	
+	public int range() {
+		return maxDelta() - minDelta() + 1;
+	}
 
 	public E dummy() {
 		if (this.type instanceof Integer) {

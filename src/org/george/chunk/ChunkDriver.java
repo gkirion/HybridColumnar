@@ -589,6 +589,10 @@ public class ChunkDriver {
 				System.out.println("NOT OK: " + delta.get(i1) + " " + plain.get(i1));
 			}
 		}
+		
+		ColumnType ct = ColumnType.ROARING;
+		
+		System.out.println(ct);
 	}
 
 }
