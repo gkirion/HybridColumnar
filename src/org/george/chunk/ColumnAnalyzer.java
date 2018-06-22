@@ -3,8 +3,9 @@ package org.george.chunk;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
-public class ColumnAnalyzer<E> implements Serializable {
+public class ColumnAnalyzer<E> implements Iterable<E>, Serializable {
 	
 	private ArrayList<E> arrayList;
 	private E type;
@@ -69,7 +70,10 @@ public class ColumnAnalyzer<E> implements Serializable {
 	}
 	
 	public int maxDelta() {
-		int previous = 0;
+		if (arrayList.isEmpty()) {
+			return 0;
+		}
+		int previous = (Integer)arrayList.get(0);
 		int maxDelta = 0;
 		for (E value : arrayList) {
 			if (((Integer)value - previous) > maxDelta) {
@@ -81,7 +85,10 @@ public class ColumnAnalyzer<E> implements Serializable {
 	}
 	
 	public int minDelta() {
-		int previous = 0;
+		if (arrayList.isEmpty()) {
+			return 0;
+		}
+		int previous = (Integer)arrayList.get(0);
 		int minDelta = 0;
 		for (E value : arrayList) {
 			if (((Integer)value - previous) < minDelta) {
@@ -101,6 +108,33 @@ public class ColumnAnalyzer<E> implements Serializable {
 
 		}
 		return arrayList.get(0);
+	}
+
+	@Override
+	public Iterator<E> iterator() {
+		return new ColumnAnalyzerIterator();
+	}
+	
+	private class ColumnAnalyzerIterator implements Iterator<E> {
+		
+		private int i;
+		
+		public ColumnAnalyzerIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < length();
+		}
+
+		@Override
+		public E next() {
+			E value = arrayList.get(i);
+			i++;
+			return value;
+		}
+		
 	}
 
 }

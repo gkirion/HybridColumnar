@@ -593,6 +593,11 @@ public class ChunkDriver {
 		ColumnType ct = ColumnType.ROARING;
 		
 		System.out.println(ct);
+		ColumnFactory<Integer> cf = new ColumnFactory<>();
+		ColumnAnalyzer<Integer> ca = new ColumnAnalyzer<>();
+		ca.add(5);
+		Column<Integer> col2 = cf.createColumn(ca, ColumnType.ROARING);
+		System.out.println(col2);
 	}
 
 }
