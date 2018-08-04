@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.function.Predicate;
 
 public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializable {
-	
+
 	private ArrayList<E> arrayList;
 	private String name;
 	private Integer id;
@@ -17,17 +17,17 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		name = "";
 		id = 0;
 	}
-	
+
 	public ColumnPlain(String name) {
 		arrayList = new ArrayList<>();
 		this.name = name;
 		id = 0;
 	}
-	
+
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -41,14 +41,10 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		return new Tuple2<E, Integer>(arrayList.get(i), 1);
 	}
 
-	public int getLength() {
-		return arrayList.size();
-	}
-
 	public ArrayList<E> entrySet() {
 		return arrayList;
 	}
-	
+
 	public String toString() {
 		return arrayList.toString();
 	}
@@ -72,7 +68,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 		return bitSet;
 	}
-	
+
 	@Override
 	public BitSet selectEquals(E item) {
 		BitSet bitSet = new BitSet();
@@ -83,7 +79,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 		return bitSet;
 	}
-	
+
 	@Override
 	public BitSet selectNotEquals(E item) {
 		BitSet bitSet = selectEquals(item);
@@ -92,7 +88,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		bSet.andNot(bitSet);
 		return bSet;
 	}
-	
+
 	@Override
 	public BitSet selectLessThan(E item) {
 		BitSet bitSet = new BitSet();
@@ -151,7 +147,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	public Long sum() {
 		Long sum = new Long(0);
 		for (E value : arrayList) {
-			sum += (Integer)value;
+			sum += (Integer) value;
 		}
 		return sum;
 	}
@@ -168,7 +164,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		for (int i = start; i < end; i++) {
-			sum += (Integer)arrayList.get(i);
+			sum += (Integer) arrayList.get(i);
 		}
 		return sum;
 	}
@@ -180,18 +176,23 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 
 	@Override
 	public Double avg(int start, int end) {
-		return sum(start, end) / (double)count(start, end);
+		return sum(start, end) / (double) count(start, end);
 	}
-	
+
 	@Override
 	public Long sum(BitSet bitSet) {
 		Long sum = new Long(0);
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
-				sum += (Integer)arrayList.get(i);
+				sum += (Integer) arrayList.get(i);
 			}
 		}
 		return sum;
+	}
+
+	@Override
+	public int length() {
+		return arrayList.size();
 	}
 
 	@Override
@@ -202,5 +203,5 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 		return distinctMap.size();
 	}
-	
+
 }

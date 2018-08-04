@@ -7,14 +7,14 @@ import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializable {
-	
+
 	private BitPacking bitPacking;
 	private String name;
 	private int offset;
-	private int id;
+	private Integer id;
 	private int last;
 	private int first;
-	
+
 	public ColumnDelta() {
 		bitPacking = new BitPacking();
 		name = "";
@@ -23,7 +23,7 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		last = 0;
 		first = -1;
 	}
-	
+
 	public ColumnDelta(int range) {
 		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
 		bitPacking = new BitPacking(numberOfBits);
@@ -32,7 +32,7 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		last = 0;
 		first = -1;
 	}
-	
+
 	public ColumnDelta(int range, int offset) {
 		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
 		bitPacking = new BitPacking(numberOfBits);
@@ -41,7 +41,7 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		id = 0;
 		last = -1;
 	}
-	
+
 	public ColumnDelta(String name) {
 		bitPacking = new BitPacking();
 		this.name = name;
@@ -188,6 +188,11 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		return bitSet;
 	}
 
+	@Override
+	public Long sum() {
+		return sum(0, id);
+	}
+
 	public Long sum(int start, int end) {
 		int i = 0;
 		Long sum = new Long(0);
@@ -221,11 +226,11 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 	}
 
 	public Double avg(int start, int end) {
-		return sum(start, end) / (double)count(start, end);
+		return sum(start, end) / (double) count(start, end);
 	}
 
-	public int getLength() {
-		return bitPacking.size();
+	public int length() {
+		return id;
 	}
 
 	public int getCardinality() {
@@ -242,12 +247,12 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 	public Iterator<Integer> iterator() {
 		return new ColumnDeltaIterator();
 	}
-	
+
 	private class ColumnDeltaIterator implements Iterator<Integer> {
-		
+
 		private int i;
 		private int value;
-		
+
 		public ColumnDeltaIterator() {
 			i = 0;
 			value = first;
@@ -264,7 +269,7 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 			i++;
 			return value;
 		}
-		
+
 	}
 
 }

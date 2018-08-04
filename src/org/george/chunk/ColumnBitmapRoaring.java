@@ -7,17 +7,17 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, Serializable {
-	
+
 	private HashMap<E, RoaringBitmap> mappings;
 	private String name;
 	private Integer id;
-	
+
 	public ColumnBitmapRoaring() {
 		mappings = new HashMap<>();
 		name = "";
 		id = 0;
 	}
-	
+
 	public ColumnBitmapRoaring(String name) {
 		mappings = new HashMap<>();
 		this.name = name;
@@ -74,20 +74,20 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 				bitmap.or(mappings.get(value));
 			}
 		}
-		return  bitmap.convertToBitSet();
+		return bitmap.convertToBitSet();
 	}
-	
+
 	@Override
 	public BitSet selectEquals(E item) {
 		for (E value : mappings.keySet()) {
 			if (value.equals(item)) {
 				return mappings.get(value).convertToBitSet();
-				//return mappings.get(value);
+				// return mappings.get(value);
 			}
 		}
 		return new BitSet();
 	}
-	
+
 	@Override
 	public BitSet selectNotEquals(E item) {
 		BitSet bitSet = selectEquals(item);
@@ -96,7 +96,7 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 		bSet.andNot(bitSet);
 		return bSet;
 	}
-	
+
 	@Override
 	public BitSet selectLessThan(E item) {
 		RoaringBitmap bitmap = new RoaringBitmap();
@@ -153,18 +153,23 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
+	public Long sum() {
+		return sum(0, id);
+	}
+
+	@Override
 	public Long sum(int start, int end) {
 		Long sum = new Long(0);
 		if (end - start == 1) {
-			sum += (Integer)get(start).getFirst() * get(start).getSecond();
+			sum += (Integer) get(start).getFirst() * get(start).getSecond();
 			return sum;
 		}
 		for (E item : mappings.keySet()) {
-			sum += (Integer)item * mappings.get(item).get(start, end).cardinality();
+			sum += (Integer) item * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
-	
+
 	@Override
 	public Long sum(BitSet bitSet) {
 		Long sum = new Long(0);
@@ -173,7 +178,7 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 		for (E value : values) {
 			bitmap.or(mappings.get(value));
 			bitmap.and(bitSet);
-			sum += (Integer)value * bitmap.cardinality();
+			sum += (Integer) value * bitmap.cardinality();
 			bitmap.clear();
 		}
 		return sum;
@@ -186,11 +191,11 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 
 	@Override
 	public Double avg(int start, int end) {
-		return sum(start, end) / (double)count(start, end);
+		return sum(start, end) / (double) count(start, end);
 	}
 
 	@Override
-	public int getLength() {
+	public int length() {
 		return id;
 	}
 

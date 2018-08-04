@@ -4,13 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>> implements Iterable<Tuple5<T1, T2, T3, Integer, Integer>>, Serializable {
-	
+public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>>
+		implements Iterable<Tuple5<T1, T2, T3, Integer, Integer>>, Serializable {
+
 	private Column<T1> col1;
 	private Column<T2> col2;
 	private Column<T3> col3;
 	private int id;
-	
+
 	public Chunk3(String col1Name, String col2Name, String col3Name) {
 		col1 = new ColumnRle<T1>(col1Name);
 		col2 = new ColumnRle<T2>(col2Name);
@@ -22,16 +23,16 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 		this.col1 = col1;
 		this.col2 = col2;
 		this.col3 = col3;
-		id = col1.getLength();
+		id = col1.length();
 	}
-	
+
 	public void add(T1 val1, T2 val2, T3 val3) {
 		col1.add(val1);
 		col2.add(val2);
 		col3.add(val3);
 		id++;
 	}
-	
+
 	public Tuple5<T1, T2, T3, Integer, Integer> get(int i) {
 		Tuple2<T1, Integer> val1 = col1.get(i);
 		Tuple2<T2, Integer> val2 = col2.get(i);
@@ -40,7 +41,7 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 		min = min < val3.getSecond() ? min : val3.getSecond();
 		return new Tuple5<T1, T2, T3, Integer, Integer>(val1.getFirst(), val2.getFirst(), val3.getFirst(), i, min);
 	}
-	
+
 	public ArrayList<Tuple5<T1, T2, T3, Integer, Integer>> getAll() {
 		ArrayList<Tuple5<T1, T2, T3, Integer, Integer>> rows = new ArrayList<>();
 		Tuple5<T1, T2, T3, Integer, Integer> row;
@@ -52,7 +53,7 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 		}
 		return rows;
 	}
-	
+
 	public ArrayList<Tuple5<T1, T2, T3, Integer, Integer>> getAllImproved() {
 		ArrayList<Tuple5<T1, T2, T3, Integer, Integer>> rows = new ArrayList<>();
 		Tuple2<T1, Integer> val1 = null;
@@ -79,24 +80,25 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 			}
 			min = length[0] - i < length[1] - i ? length[0] - i : length[1] - i;
 			min = min < length[2] - i ? min : length[2] - i;
-			rows.add(new Tuple5<T1, T2, T3, Integer, Integer>(val1.getFirst(), val2.getFirst(), val3.getFirst(), i, min));		
+			rows.add(new Tuple5<T1, T2, T3, Integer, Integer>(val1.getFirst(), val2.getFirst(), val3.getFirst(), i,
+					min));
 			i += min;
 		}
 		return rows;
 	}
-	
+
 	public Column<T1> getFirstColumn() {
 		return col1;
 	}
-	
+
 	public Column<T2> getSecondColumn() {
 		return col2;
 	}
-	
+
 	public Column<T3> getThirdColumn() {
 		return col3;
 	}
-	
+
 	public String toString() {
 		ArrayList<Tuple5<T1, T2, T3, Integer, Integer>> rows = new ArrayList<>();
 		Tuple5<T1, T2, T3, Integer, Integer> row;
@@ -113,15 +115,15 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 	public Iterator<Tuple5<T1, T2, T3, Integer, Integer>> iterator() {
 		return new ChunkIterator();
 	}
-	
+
 	private class ChunkIterator implements Iterator<Tuple5<T1, T2, T3, Integer, Integer>> {
-		
+
 		private int index;
 		private int[] length;
 		private Tuple2<T1, Integer> val1;
 		private Tuple2<T2, Integer> val2;
 		private Tuple2<T3, Integer> val3;
-		
+
 		public ChunkIterator() {
 			index = 0;
 			length = new int[3];
@@ -137,7 +139,7 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 		public boolean hasNext() {
 			return index < id;
 		}
-		
+
 		public Tuple5<T1, T2, T3, Integer, Integer> get(int i) {
 			int min;
 			if (length[0] <= i) {
@@ -164,7 +166,7 @@ public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 ext
 			index += value.getFifth();
 			return value;
 		}
-		
+
 	}
-	
+
 }

@@ -1,7 +1,5 @@
 package org.george.chunk;
 
-import jdk.nashorn.internal.codegen.types.ArrayType;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,27 +8,27 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 
 	private Column<T> col;
 	private int id;
-	
+
 	public Chunk1(String colName) {
 		col = new ColumnRle<T>(colName);
 		id = 0;
 	}
-	
+
 	public Chunk1(Column<T> col) {
 		this.col = col;
-		id = col.getLength();
+		id = col.length();
 	}
-	
+
 	public void add(T val) {
 		col.add(val);
 		id++;
 	}
-	
+
 	public Tuple3<T, Integer, Integer> get(int i) {
 		Tuple2<T, Integer> val = col.get(i);
 		return new Tuple3<T, Integer, Integer>(val.getFirst(), i, val.getSecond());
 	}
-	
+
 	public ArrayList<Tuple3<T, Integer, Integer>> getAll() {
 		ArrayList<Tuple3<T, Integer, Integer>> rows = new ArrayList<>();
 		Tuple3<T, Integer, Integer> row;
@@ -42,7 +40,7 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 		}
 		return rows;
 	}
-	
+
 	public ArrayList<Tuple3<T, Integer, Integer>> getAllImproved() {
 		ArrayList<Tuple3<T, Integer, Integer>> rows = new ArrayList<>();
 		Tuple2<T, Integer> val1 = null;
@@ -56,12 +54,12 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 				length[0] = i + val1.getSecond();
 			}
 			min = length[0] - i;
-			rows.add(new Tuple3<T, Integer, Integer>(val1.getFirst(), i, min));		
+			rows.add(new Tuple3<T, Integer, Integer>(val1.getFirst(), i, min));
 			i += min;
 		}
 		return rows;
 	}
-	
+
 	public Column<T> getFirstColumn() {
 		return col;
 	}
@@ -73,7 +71,8 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 			for (Tuple3<T, Integer, Integer> otherRow : otherChunk) {
 				if (row.getFirst().equals(otherRow.getFirst())) {
 					thisPositions.add(new Tuple2<Integer, Integer>(row.getSecond(), row.getSecond() + row.getThird()));
-					otherPositions.add(new Tuple2<Integer, Integer>(otherRow.getSecond(), otherRow.getSecond() + otherRow.getThird()));
+					otherPositions.add(new Tuple2<Integer, Integer>(otherRow.getSecond(),
+							otherRow.getSecond() + otherRow.getThird()));
 				}
 			}
 		}
@@ -82,7 +81,7 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 		result.add(otherPositions);
 		return result;
 	}
-	
+
 	public String toString() {
 		ArrayList<Tuple3<T, Integer, Integer>> rows = new ArrayList<>();
 		Tuple3<T, Integer, Integer> row;
@@ -99,13 +98,13 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 	public Iterator<Tuple3<T, Integer, Integer>> iterator() {
 		return new ChunkIterator();
 	}
-	
+
 	private class ChunkIterator implements Iterator<Tuple3<T, Integer, Integer>> {
-		
+
 		private int index;
 		private int[] length;
 		private Tuple2<T, Integer> val1;
-		
+
 		public ChunkIterator() {
 			index = 0;
 			length = new int[1];
@@ -117,7 +116,7 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 		public boolean hasNext() {
 			return index < id;
 		}
-		
+
 		public Tuple3<T, Integer, Integer> get(int i) {
 			int min;
 			if (length[0] <= i) {
@@ -135,7 +134,7 @@ public class Chunk1<T extends Comparable<T>> implements Iterable<Tuple3<T, Integ
 			index += value.getThird();
 			return value;
 		}
-		
+
 	}
-	
+
 }

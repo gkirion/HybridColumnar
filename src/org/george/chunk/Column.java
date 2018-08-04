@@ -4,7 +4,6 @@ import java.util.BitSet;
 import java.util.function.Predicate;
 
 public interface Column<E extends Comparable<E>> {
-	
 
 	void setName(String name);
 
@@ -15,31 +14,33 @@ public interface Column<E extends Comparable<E>> {
 	Tuple2<E, Integer> get(int i);
 
 	BitSet select(Predicate<E> predicate);
-	
+
 	BitSet selectEquals(E item);
-	
+
 	BitSet selectNotEquals(E item);
-	
+
 	BitSet selectLessThan(E item);
-	
+
 	BitSet selectLessThanOrEquals(E item);
-	
+
 	BitSet selectMoreThan(E item);
-	
+
 	BitSet selectMoreThanOrEquals(E item);
-	
+
 	BitSet selectBetween(E from, E to);
-	
+
+	Long sum();
+
 	Long sum(int start, int end);
-	
+
 	Long sum(BitSet bitSet);
-	
+
 	Integer count(int start, int end);
-	
+
 	Double avg(int start, int end);
 
-	int getLength();
-	
+	int length();
+
 	int getCardinality();
 
 	String toString();
