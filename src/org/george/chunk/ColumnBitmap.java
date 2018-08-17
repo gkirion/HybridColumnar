@@ -13,9 +13,7 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 	private Integer id;
 
 	public ColumnBitmap() {
-		mappings = new HashMap<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnBitmap(String name) {
@@ -149,31 +147,31 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		if (end - start == 1) {
-			sum += (Integer) get(start).getFirst() * get(start).getSecond();
+			sum += ((Number) get(start).getFirst()).doubleValue() * get(start).getSecond();
 			return sum;
 		}
 		for (E item : mappings.keySet()) {
-			sum += (Integer) item * mappings.get(item).get(start, end).cardinality();
+			sum += ((Number) item).doubleValue() * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		BitSet bSet = new BitSet();
 		for (E value : mappings.keySet()) {
 			bSet.or(mappings.get(value)); // load bitset of value
 			bSet.and(bitSet);
-			sum += (Integer) value * bSet.cardinality();
+			sum += ((Number) value).doubleValue() * bSet.cardinality();
 			bSet.clear();
 		}
 		return sum;
@@ -183,8 +181,26 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 		return (end < id ? end : id) - start;
 	}
 
+	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		BitSet bSet = new BitSet();
+		for (E value : mappings.keySet()) {
+			bSet.or(mappings.get(value)); // load bitset of value
+			bSet.and(bitSet);
+			sum += (Integer) value * bSet.cardinality();
+			bSet.clear();
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

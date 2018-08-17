@@ -29,15 +29,19 @@ public interface Column<E extends Comparable<E>> {
 
 	BitSet selectBetween(E from, E to);
 
-	Long sum();
+	Double sum();
 
-	Long sum(int start, int end);
+	Double sum(int start, int end);
 
-	Long sum(BitSet bitSet);
+	Double sum(BitSet bitSet);
 
 	Integer count(int start, int end);
 
+	Double avg();
+
 	Double avg(int start, int end);
+
+	Double avg(BitSet bitSet);
 
 	int length();
 

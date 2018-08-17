@@ -13,6 +13,9 @@ public class ColumnFactory<E extends Comparable<E>> {
 		case RLE:
 			column = new ColumnRle<E>();
 			break;
+		case RLE_DICTIONARY:
+			column = new ColumnDictionaryRle<E>();
+			break;
 		case BITMAP:
 			column = new ColumnBitmap<E>();
 			break;
@@ -21,6 +24,12 @@ public class ColumnFactory<E extends Comparable<E>> {
 			break;
 		case DELTA:
 			column = (Column<E>) new ColumnDelta(columnAnalyzer.range(), columnAnalyzer.minDelta() * (-1));
+			break;
+		case DELTA_DICTIONARY:
+			column = new ColumnDictionaryDelta<E>(columnAnalyzer.range(), columnAnalyzer.minDelta() * (-1));
+			break;
+		case PLAIN_DICTIONARY:
+			column = new ColumnDictionaryPlain<E>();
 			break;
 		default:
 			column = new ColumnPlain<E>();

@@ -13,9 +13,7 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	private Integer id;
 
 	public ColumnBitmapRoaring() {
-		mappings = new HashMap<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnBitmapRoaring(String name) {
@@ -153,32 +151,32 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		if (end - start == 1) {
-			sum += (Integer) get(start).getFirst() * get(start).getSecond();
+			sum += ((Number) get(start).getFirst()).doubleValue() * get(start).getSecond();
 			return sum;
 		}
 		for (E item : mappings.keySet()) {
-			sum += (Integer) item * mappings.get(item).get(start, end).cardinality();
+			sum += ((Number) item).doubleValue() * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		RoaringBitmap bitmap = new RoaringBitmap();
 		Set<E> values = mappings.keySet();
 		for (E value : values) {
 			bitmap.or(mappings.get(value));
 			bitmap.and(bitSet);
-			sum += (Integer) value * bitmap.cardinality();
+			sum += ((Number) value).doubleValue() * bitmap.cardinality();
 			bitmap.clear();
 		}
 		return sum;
@@ -190,8 +188,27 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		RoaringBitmap bitmap = new RoaringBitmap();
+		Set<E> values = mappings.keySet();
+		for (E value : values) {
+			bitmap.or(mappings.get(value));
+			bitmap.and(bitSet);
+			sum += (Integer) value * bitmap.cardinality();
+			bitmap.clear();
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

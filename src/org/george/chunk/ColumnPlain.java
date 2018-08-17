@@ -13,9 +13,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	private Integer id;
 
 	public ColumnPlain() {
-		arrayList = new ArrayList<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnPlain(String name) {
@@ -144,27 +142,35 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		return bitSet;
 	}
 
-	public Long sum() {
-		Long sum = new Long(0);
-		for (E value : arrayList) {
-			sum += (Integer) value;
-		}
-		return sum;
-	}
-
 	public Integer count() {
 		return arrayList.size();
 	}
 
-	public Double avg() {
-		return sum() / count().doubleValue();
+	@Override
+	public Double sum() {
+		Double sum = 0.0;
+		for (E value : arrayList) {
+			sum += (Double) value;
+		}
+		return sum;
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		for (int i = start; i < end; i++) {
-			sum += (Integer) arrayList.get(i);
+			sum += ((Number) arrayList.get(i)).doubleValue();
+		}
+		return sum;
+	}
+
+	@Override
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
+		for (int i = 0; i < id; i++) {
+			if (bitSet.get(i)) {
+				sum += ((Number) arrayList.get(i)).doubleValue();
+			}
 		}
 		return sum;
 	}
@@ -175,19 +181,24 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	}
 
 	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
+	public Double avg(BitSet bitSet) {
 		Long sum = new Long(0);
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
 				sum += (Integer) arrayList.get(i);
 			}
 		}
-		return sum;
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

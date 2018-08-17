@@ -14,10 +14,7 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
 	private Integer id;
 
 	public ColumnDictionaryPlain() {
-		arrayList = new ArrayList<>();
-		dictionary = new Dictionary<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnDictionaryPlain(String name) {
@@ -152,25 +149,25 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		for (int i = start; i < end; i++) {
-			sum += (Integer) dictionary.get(arrayList.get(i));
+			sum += ((Number) dictionary.get(arrayList.get(i))).doubleValue();
 		}
 		return sum;
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
-				sum += (Integer) dictionary.get(arrayList.get(i));
+				sum += ((Number) dictionary.get(arrayList.get(i))).doubleValue();
 			}
 		}
 		return sum;
@@ -182,8 +179,24 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
 	}
 
 	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		for (int i = 0; i < id; i++) {
+			if (bitSet.get(i)) {
+				sum += (Integer) dictionary.get(arrayList.get(i));
+			}
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

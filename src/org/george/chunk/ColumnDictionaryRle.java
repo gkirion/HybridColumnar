@@ -14,10 +14,7 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 	private Integer id;
 
 	public ColumnDictionaryRle() {
-		arrayList = new ArrayList<>();
-		dictionary = new Dictionary<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnDictionaryRle(String name) {
@@ -198,19 +195,20 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		int i = start;
 		Tuple3<Integer, Integer, Integer> val;
 		int index = find(start, 0, arrayList.size() - 1);
 		while (i < end) {
 			val = arrayList.get(index);
-			sum += (Integer) dictionary.get(val.getFirst()) * (i + val.getSecond() <= end ? val.getSecond() : end - i);
+			sum += ((Number) dictionary.get(val.getFirst())).doubleValue()
+					* (i + val.getSecond() <= end ? val.getSecond() : end - i);
 			i += val.getSecond();
 			index++;
 		}
@@ -218,13 +216,13 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		int n = arrayList.size();
 		Tuple3<Integer, Integer, Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			sum += (Integer) dictionary.get(tuple.getFirst())
+			sum += ((Number) dictionary.get(tuple.getFirst())).doubleValue()
 					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
 		}
 		return sum;
@@ -236,8 +234,26 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		int n = arrayList.size();
+		Tuple3<Integer, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			sum += (Integer) dictionary.get(tuple.getFirst())
+					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

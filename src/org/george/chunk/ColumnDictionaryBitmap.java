@@ -14,10 +14,7 @@ public class ColumnDictionaryBitmap<E extends Comparable<E>> implements Column<E
 	private Integer id;
 
 	public ColumnDictionaryBitmap() {
-		mappings = new HashMap<>();
-		dictionary = new Dictionary<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnDictionaryBitmap(String name) {
@@ -159,30 +156,30 @@ public class ColumnDictionaryBitmap<E extends Comparable<E>> implements Column<E
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		if (end - start == 1) {
-			sum += (Integer) get(start).getFirst() * get(start).getSecond();
+			sum += ((Number) get(start).getFirst()).doubleValue() * get(start).getSecond();
 			return sum;
 		}
 		for (Integer item : mappings.keySet()) {
-			sum += (Integer) dictionary.get(item) * mappings.get(item).get(start, end).cardinality();
+			sum += ((Number) dictionary.get(item)).doubleValue() * mappings.get(item).get(start, end).cardinality();
 		}
 		return sum;
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		BitSet bSet = new BitSet();
 		for (Integer value : mappings.keySet()) {
 			bSet.or(mappings.get(value)); // load bitset of value
 			bSet.and(bitSet);
-			sum += (Integer) dictionary.get(value) * bSet.cardinality();
+			sum += ((Number) dictionary.get(value)).doubleValue() * bSet.cardinality();
 			bSet.clear();
 		}
 		return sum;
@@ -192,8 +189,26 @@ public class ColumnDictionaryBitmap<E extends Comparable<E>> implements Column<E
 		return (end < id ? end : id) - start;
 	}
 
+	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		BitSet bSet = new BitSet();
+		for (Integer value : mappings.keySet()) {
+			bSet.or(mappings.get(value)); // load bitset of value
+			bSet.and(bitSet);
+			sum += (Integer) dictionary.get(value) * bSet.cardinality();
+			bSet.clear();
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override

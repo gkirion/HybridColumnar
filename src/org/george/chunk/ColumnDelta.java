@@ -16,21 +16,16 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 	private int first;
 
 	public ColumnDelta() {
-		bitPacking = new BitPacking();
-		name = "";
-		offset = 0;
-		id = 0;
-		last = 0;
-		first = -1;
+		this(2);
 	}
 
 	public ColumnDelta(int range) {
-		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
-		bitPacking = new BitPacking(numberOfBits);
-		name = "";
-		offset = 0;
-		last = 0;
-		first = -1;
+		this(range, 0);
+	}
+
+	public ColumnDelta(String name) {
+		this(2);
+		this.name = name;
 	}
 
 	public ColumnDelta(int range, int offset) {
@@ -40,13 +35,6 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		this.offset = offset;
 		id = 0;
 		last = -1;
-	}
-
-	public ColumnDelta(String name) {
-		bitPacking = new BitPacking();
-		this.name = name;
-		last = 0;
-		first = -1;
 	}
 
 	public void setName(String name) {
@@ -110,7 +98,7 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		int value = first;
 		for (Integer val : bitPacking) {
 			value += val - offset;
-			if (value == item) {
+			if (value != item) {
 				bitSet.set(i);
 			}
 			i++;
@@ -189,13 +177,13 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
-	public Long sum(int start, int end) {
+	public Double sum(int start, int end) {
 		int i = 0;
-		Long sum = new Long(0);
+		Double sum = 0.0;
 		int value = first;
 		for (Integer val : bitPacking) {
 			value += val - offset;
@@ -207,10 +195,10 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		return sum;
 	}
 
-	public Long sum(BitSet bitSet) {
+	public Double sum(BitSet bitSet) {
 		int i = 0;
 		int value = first;
-		Long sum = new Long(0);
+		Double sum = 0.0;
 		for (Integer val : bitPacking) {
 			value += val - offset;
 			if (bitSet.get(i)) {
@@ -225,8 +213,28 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		return (end < id ? end : id) - start;
 	}
 
+	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		int i = 0;
+		int value = first;
+		Long sum = new Long(0);
+		for (Integer val : bitPacking) {
+			value += val - offset;
+			if (bitSet.get(i)) {
+				sum += value;
+			}
+			i++;
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	public int length() {

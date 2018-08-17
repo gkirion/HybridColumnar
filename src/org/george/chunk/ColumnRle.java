@@ -13,9 +13,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	private Integer id;
 
 	public ColumnRle() {
-		arrayList = new ArrayList<>();
-		name = "";
-		id = 0;
+		this("");
 	}
 
 	public ColumnRle(String name) {
@@ -188,19 +186,19 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 
 	@Override
-	public Long sum() {
+	public Double sum() {
 		return sum(0, id);
 	}
 
 	@Override
-	public Long sum(int start, int end) {
-		Long sum = new Long(0);
+	public Double sum(int start, int end) {
+		Double sum = 0.0;
 		int i = start;
 		Tuple3<E, Integer, Integer> val;
 		int index = find(start, 0, arrayList.size() - 1);
 		while (i < end) {
 			val = arrayList.get(index);
-			sum += (Integer) val.getFirst() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
+			sum += ((Number) val.getFirst()).doubleValue() * (i + val.getSecond() <= end ? val.getSecond() : end - i);
 			i += val.getSecond();
 			index++;
 		}
@@ -208,13 +206,13 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 
 	@Override
-	public Long sum(BitSet bitSet) {
-		Long sum = new Long(0);
+	public Double sum(BitSet bitSet) {
+		Double sum = 0.0;
 		int n = arrayList.size();
 		Tuple3<E, Integer, Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			sum += (Integer) tuple.getFirst()
+			sum += ((Number) tuple.getFirst()).doubleValue()
 					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
 		}
 		return sum;
@@ -226,8 +224,26 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 
 	@Override
+	public Double avg() {
+		return avg(0, id);
+	}
+
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
+	}
+
+	@Override
+	public Double avg(BitSet bitSet) {
+		Long sum = new Long(0);
+		int n = arrayList.size();
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = 0; i < n; i++) {
+			tuple = arrayList.get(i);
+			sum += (Integer) tuple.getFirst()
+					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+		}
+		return sum / (double) bitSet.cardinality();
 	}
 
 	@Override
