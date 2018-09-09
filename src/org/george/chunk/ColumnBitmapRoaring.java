@@ -3,6 +3,7 @@ package org.george.chunk;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -219,6 +220,38 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	@Override
 	public int getCardinality() {
 		return mappings.size();
+	}
+
+	@Override
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		return new ColumnBitmapRoaringIterator();
+	}
+
+	private class ColumnBitmapRoaringIterator implements Iterator<Tuple2<E, Integer>> {
+
+		private int i;
+		private Tuple2<E, Integer> value;
+
+		public ColumnBitmapRoaringIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < id;
+		}
+
+		@Override
+		public Tuple2<E, Integer> next() {
+			for (E item : mappings.keySet()) {
+				if (mappings.get(item).get(i)) {
+					value = new Tuple2<E, Integer>(item, 1);
+				}
+			}
+			i++;
+			return value;
+		}
+
 	}
 
 }

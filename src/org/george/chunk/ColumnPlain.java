@@ -4,10 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializable {
 
+	private ColumnType columnType;
+	private E type;
 	private ArrayList<E> arrayList;
 	private String name;
 	private Integer id;
@@ -17,6 +20,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	}
 
 	public ColumnPlain(String name) {
+		columnType = ColumnType.PLAIN;
 		arrayList = new ArrayList<>();
 		this.name = name;
 		id = 0;
@@ -213,6 +217,38 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 			distinctMap.put(value, true);
 		}
 		return distinctMap.size();
+	}
+
+	public String type() {
+		return columnType + "<" + type.getClass() + ">";
+	}
+
+	@Override
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		return new ColumnPlainIterator();
+	}
+
+	private class ColumnPlainIterator implements Iterator<Tuple2<E, Integer>> {
+
+		private int i;
+		private E value;
+
+		public ColumnPlainIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < id;
+		}
+
+		@Override
+		public Tuple2<E, Integer> next() {
+			value = arrayList.get(i);
+			i++;
+			return new Tuple2<E, Integer>(value, 1);
+		}
+
 	}
 
 }

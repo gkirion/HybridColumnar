@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializable {
+public class ColumnDelta implements Column<Integer>, Serializable {
 
 	private BitPacking bitPacking;
 	private String name;
@@ -252,11 +252,11 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 	}
 
 	@Override
-	public Iterator<Integer> iterator() {
+	public Iterator<Tuple2<Integer, Integer>> iterator() {
 		return new ColumnDeltaIterator();
 	}
 
-	private class ColumnDeltaIterator implements Iterator<Integer> {
+	private class ColumnDeltaIterator implements Iterator<Tuple2<Integer, Integer>> {
 
 		private int i;
 		private int value;
@@ -272,10 +272,10 @@ public class ColumnDelta implements Column<Integer>, Iterable<Integer>, Serializ
 		}
 
 		@Override
-		public Integer next() {
+		public Tuple2<Integer, Integer> next() {
 			value += bitPacking.get(i) - offset;
 			i++;
-			return value;
+			return new Tuple2<Integer, Integer>(value, 1);
 		}
 
 	}

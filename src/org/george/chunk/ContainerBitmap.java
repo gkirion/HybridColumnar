@@ -5,22 +5,33 @@ import java.util.BitSet;
 import java.util.Iterator;
 
 public class ContainerBitmap implements Container, Serializable {
-	
+
 	private BitSet bitSet;
-	
+	private int id;
+
 	public ContainerBitmap() {
 		bitSet = new BitSet();
 	}
-	
+
 	public ContainerBitmap(BitSet bitSet) {
 		this.bitSet = bitSet;
+	}
+
+	@Override
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	@Override
+	public int getId() {
+		return id;
 	}
 
 	@Override
 	public void set(int item) {
 		bitSet.set(item & 0xFFFF);
 	}
-	
+
 	@Override
 	public void set(int start, int end) {
 		bitSet.set(start, end);
@@ -30,10 +41,12 @@ public class ContainerBitmap implements Container, Serializable {
 	public boolean get(int i) {
 		return bitSet.get(i & 0xFFFF);
 	}
-	
+
 	@Override
 	public Container get(int start, int end) {
-		return new ContainerBitmap(bitSet.get(start, end));
+		Container container = new ContainerBitmap(bitSet.get(start, end));
+		container.setId(id);
+		return container;
 	}
 
 	public BitSet getBitSet() {
@@ -42,12 +55,11 @@ public class ContainerBitmap implements Container, Serializable {
 
 	@Override
 	public Container or(Container container) {
-		/*if (container instanceof ContainerArray) {
-			return or((ContainerArray)container);
-		}
-		else {
-			return or((ContainerBitmap)container);
-		}*/
+		/*
+		 * if (container instanceof ContainerArray) { return
+		 * or((ContainerArray)container); } else { return
+		 * or((ContainerBitmap)container); }
+		 */
 		Container container3 = new ContainerBitmap();
 		Iterator<Integer> iterator1 = this.iterator();
 		Iterator<Integer> iterator2 = container.iterator();
@@ -57,12 +69,10 @@ public class ContainerBitmap implements Container, Serializable {
 			if (val1 < val2) {
 				container3.set(val1);
 				container3.set(val2);
-			}
-			else if (val1 > val2) {
+			} else if (val1 > val2) {
 				container3.set(val2);
 				container3.set(val1);
-			}
-			else {
+			} else {
 				container3.set(val1);
 			}
 		}
@@ -78,12 +88,10 @@ public class ContainerBitmap implements Container, Serializable {
 	@Override
 	public Container and(Container container) {
 		/*
-		if (container instanceof ContainerArray) {
-			return and((ContainerArray)container);
-		}
-		else {
-			return and((ContainerBitmap)container);
-		}*/
+		 * if (container instanceof ContainerArray) { return
+		 * and((ContainerArray)container); } else { return
+		 * and((ContainerBitmap)container); }
+		 */
 		Container container3 = new ContainerArray();
 		for (Integer element : this) {
 			if (container.get(element)) {
@@ -108,7 +116,7 @@ public class ContainerBitmap implements Container, Serializable {
 		}
 		return this;
 	}
-	
+
 	@Override
 	public Container or(BitSet bitSet) {
 		this.bitSet.or(bitSet);
@@ -166,11 +174,11 @@ public class ContainerBitmap implements Container, Serializable {
 	public Iterator<Integer> iterator() {
 		return new ContainerBitmapIterator();
 	}
-	
+
 	private class ContainerBitmapIterator implements Iterator<Integer> {
-		
+
 		private int index;
-		
+
 		public ContainerBitmapIterator() {
 			index = bitSet.nextSetBit(0);
 		}
@@ -189,7 +197,7 @@ public class ContainerBitmap implements Container, Serializable {
 			index = bitSet.nextSetBit(index + 1);
 			return value;
 		}
-		
+
 	}
 
 }

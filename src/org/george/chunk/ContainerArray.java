@@ -11,17 +11,28 @@ public class ContainerArray implements Container, Serializable {
 	private int cardinality;
 	private final int INITIAL_CAPACITY = 4;
 	private final int MAX_CAPACITY = 65536;
-	
+	private int id;
+
 	public ContainerArray() {
 		array = new short[INITIAL_CAPACITY];
 		cardinality = 0;
 	}
-	
+
 	public ContainerArray(short[] array, int cardinality) {
 		this.array = array;
 		this.cardinality = cardinality;
 	}
-	
+
+	@Override
+	public void setId(int id) {
+		this.id = id;
+	}
+
+	@Override
+	public int getId() {
+		return id;
+	}
+
 	public short[] getArray() {
 		return array;
 	}
@@ -29,20 +40,22 @@ public class ContainerArray implements Container, Serializable {
 	@Override
 	public void set(int item) {
 		if (array.length <= cardinality) { // if size is not enough
-			int newCapacity = array.length < 512 ? array.length * 2 : (int) (array.length < 4096 ? array.length * 1.5 : Integer.min((int) (array.length * 1.2), MAX_CAPACITY));
+			int newCapacity = array.length < 512 ? array.length * 2
+					: (int) (array.length < 4096 ? array.length * 1.5
+							: Integer.min((int) (array.length * 1.2), MAX_CAPACITY));
 			array = Arrays.copyOf(array, newCapacity);
 		}
-		array[cardinality] = (short)item;
+		array[cardinality] = (short) item;
 		cardinality++;
 	}
-	
+
 	@Override
 	public void set(int start, int end) {
 		for (int i = start; i < end; i++) {
 			set(i);
 		}
 	}
-	
+
 	@Override
 	public boolean get(int item) {
 		int index = find(0, cardinality - 1, item & 0xFFFF);
@@ -51,12 +64,12 @@ public class ContainerArray implements Container, Serializable {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public Container get(int start, int end) {
 		int fromIndex = findGreaterThanOrEqual(0, cardinality - 1, start);
 		int toIndex = findLessThanOrEqual(0, cardinality - 1, end);
-		if (fromIndex < 0  || toIndex < 0) { // no element in that range
+		if (fromIndex < 0 || toIndex < 0) { // no element in that range
 			return new ContainerArray();
 		}
 		if ((array[toIndex] & 0xFFFF) < end) { // if last element is smaller than end include that too
@@ -64,9 +77,11 @@ public class ContainerArray implements Container, Serializable {
 		}
 		short[] newArray = Arrays.copyOfRange(array, fromIndex, toIndex);
 		int newCardinality = toIndex - fromIndex;
-		return new ContainerArray(newArray, newCardinality);
+		Container container = new ContainerArray(newArray, newCardinality);
+		container.setId(id);
+		return container;
 	}
-	
+
 	public ContainerBitmap convertToBitmap() {
 		ContainerBitmap newContainer = new ContainerBitmap();
 		for (int i = 0; i < cardinality; i++) {
@@ -74,7 +89,7 @@ public class ContainerArray implements Container, Serializable {
 		}
 		return newContainer;
 	}
-	
+
 	protected int find(int left, int right, int key) {
 		int mid = (left + right) / 2;
 		if (left > right) {
@@ -83,15 +98,13 @@ public class ContainerArray implements Container, Serializable {
 		int value = array[mid] & 0xFFFF;
 		if (value < key) {
 			return find(mid + 1, right, key);
-		}
-		else if (value > key) {
+		} else if (value > key) {
 			return find(left, mid - 1, key);
-		}
-		else {
+		} else {
 			return mid;
 		}
 	}
-	
+
 	protected int findGreaterThanOrEqual(int left, int right, int key) {
 		int mid = (left + right) / 2;
 		if (left > right) {
@@ -100,18 +113,16 @@ public class ContainerArray implements Container, Serializable {
 		int value = array[mid] & 0xFFFF;
 		if (value < key) {
 			return findGreaterThanOrEqual(mid + 1, right, key);
-		}
-		else if (value > key) {
+		} else if (value > key) {
 			if (mid - 1 < 0 || ((array[mid - 1] & 0xFFFF) < key)) {
 				return mid;
 			}
 			return findGreaterThanOrEqual(left, mid - 1, key);
-		}
-		else {
+		} else {
 			return mid;
 		}
 	}
-	
+
 	protected int findLessThanOrEqual(int left, int right, int key) {
 		int mid = (left + right) / 2;
 		if (left > right) {
@@ -123,23 +134,20 @@ public class ContainerArray implements Container, Serializable {
 				return mid;
 			}
 			return findLessThanOrEqual(mid + 1, right, key);
-		}
-		else if (value > key) {
+		} else if (value > key) {
 			return findLessThanOrEqual(left, mid - 1, key);
-		}
-		else {
+		} else {
 			return mid;
 		}
 	}
-	
+
 	@Override
 	public Container or(Container container) {
-		/*if (container instanceof ContainerArray) {
-			return or((ContainerArray)container);
-		}
-		else {
-			return or((ContainerBitmap)container);
-		}*/
+		/*
+		 * if (container instanceof ContainerArray) { return
+		 * or((ContainerArray)container); } else { return
+		 * or((ContainerBitmap)container); }
+		 */
 		Container container3 = new ContainerBitmap();
 		Iterator<Integer> iterator1 = this.iterator();
 		Iterator<Integer> iterator2 = container.iterator();
@@ -149,12 +157,10 @@ public class ContainerArray implements Container, Serializable {
 			if (val1 < val2) {
 				container3.set(val1);
 				container3.set(val2);
-			}
-			else if (val1 > val2) {
+			} else if (val1 > val2) {
 				container3.set(val2);
 				container3.set(val1);
-			}
-			else {
+			} else {
 				container3.set(val1);
 			}
 		}
@@ -162,8 +168,7 @@ public class ContainerArray implements Container, Serializable {
 			while (iterator1.hasNext()) {
 				container3.set(iterator1.next());
 			}
-		}
-		else {
+		} else {
 			while (iterator2.hasNext()) {
 				container3.set(iterator2.next());
 			}
@@ -173,12 +178,11 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container and(Container container) {
-		/*if (container instanceof ContainerArray) {
-			return and((ContainerArray)container);
-		}
-		else {
-			return and((ContainerBitmap)container);
-		}*/
+		/*
+		 * if (container instanceof ContainerArray) { return
+		 * and((ContainerArray)container); } else { return
+		 * and((ContainerBitmap)container); }
+		 */
 		Container container3 = new ContainerArray();
 		for (Integer element : this) {
 			if (container.get(element)) {
@@ -190,7 +194,7 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container or(ContainerBitmap containerBitmap) {
-		BitSet bitSet = (BitSet)containerBitmap.getBitSet().clone();
+		BitSet bitSet = (BitSet) containerBitmap.getBitSet().clone();
 		for (int i = 0; i < cardinality; i++) {
 			bitSet.set(array[i] & 0xFFFF);
 		}
@@ -208,13 +212,11 @@ public class ContainerArray implements Container, Serializable {
 			if ((array[i] & 0xFFFF) < (array2[j] & 0xFFFF)) {
 				newArray[z] = array[i];
 				i++;
-			}
-			else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
+			} else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
 				newArray[z] = array[i];
 				i++;
 				j++;
-			}
-			else {
+			} else {
 				newArray[z] = array2[j];
 				j++;
 			}
@@ -225,8 +227,7 @@ public class ContainerArray implements Container, Serializable {
 				newArray[z] = array2[k];
 				z++;
 			}
-		}
-		else {
+		} else {
 			for (int k = i; k < n1; k++) {
 				newArray[z] = array[k];
 				z++;
@@ -236,10 +237,10 @@ public class ContainerArray implements Container, Serializable {
 		cardinality = z;
 		return this;
 	}
-	
+
 	@Override
 	public Container or(BitSet bitSet) {
-		BitSet bSet = (BitSet)bitSet.clone();
+		BitSet bSet = (BitSet) bitSet.clone();
 		for (int i = 0; i < cardinality; i++) {
 			bSet.set(array[i] & 0xFFFF);
 		}
@@ -273,14 +274,12 @@ public class ContainerArray implements Container, Serializable {
 		while (i < n1 && j < n2) {
 			if ((array[i] & 0xFFFF) < (array2[j] & 0xFFFF)) {
 				i++;
-			}
-			else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
+			} else if ((array[i] & 0xFFFF) == (array2[j] & 0xFFFF)) {
 				newArray[z] = array[i];
 				i++;
 				j++;
 				z++;
-			}
-			else {
+			} else {
 				j++;
 			}
 		}
@@ -288,7 +287,7 @@ public class ContainerArray implements Container, Serializable {
 		cardinality = z;
 		return this;
 	}
-	
+
 	@Override
 	public Container and(BitSet bitSet) {
 		BitSet newBitSet = new BitSet();
@@ -325,11 +324,11 @@ public class ContainerArray implements Container, Serializable {
 	public Iterator<Integer> iterator() {
 		return new ContainerArrayIterator();
 	}
-	
+
 	private class ContainerArrayIterator implements Iterator<Integer> {
-		
+
 		private int index;
-		
+
 		public ContainerArrayIterator() {
 			index = 0;
 		}
@@ -345,7 +344,7 @@ public class ContainerArray implements Container, Serializable {
 			index++;
 			return value;
 		}
-		
+
 	}
 
 }

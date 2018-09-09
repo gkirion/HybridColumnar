@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializable {
@@ -262,6 +263,34 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 			distinctMap.put(arrayList.get(i).getFirst(), true);
 		}
 		return distinctMap.size();
+	}
+
+	@Override
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		return new ColumnRleIterator();
+	}
+
+	private class ColumnRleIterator implements Iterator<Tuple2<E, Integer>> {
+
+		private int i;
+		private Tuple3<E, Integer, Integer> value;
+
+		public ColumnRleIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < arrayList.size();
+		}
+
+		@Override
+		public Tuple2<E, Integer> next() {
+			value = arrayList.get(i);
+			i++;
+			return new Tuple2<E, Integer>(value.getFirst(), value.getSecond());
+		}
+
 	}
 
 }

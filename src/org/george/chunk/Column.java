@@ -3,7 +3,7 @@ package org.george.chunk;
 import java.util.BitSet;
 import java.util.function.Predicate;
 
-public interface Column<E extends Comparable<E>> {
+public interface Column<E extends Comparable<E>> extends Iterable<Tuple2<E, Integer>> {
 
 	void setName(String name);
 

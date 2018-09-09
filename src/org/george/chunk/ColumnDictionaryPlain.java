@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.function.Predicate;
 
 public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>, Serializable {
@@ -211,6 +212,12 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
 			distinctMap.put(dictionary.get(value), true);
 		}
 		return distinctMap.size();
+	}
+
+	@Override
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

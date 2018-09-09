@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
-public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>, Iterable<E>, Serializable {
+public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>, Serializable {
 
 	private BitPacking bitPacking;
 	private Dictionary<E> dictionary;
@@ -272,8 +272,8 @@ public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>
 	}
 
 	@Override
-	public Iterator<E> iterator() {
-		return new ColumnDeltaIterator();
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		return null;
 	}
 
 	private class ColumnDeltaIterator implements Iterator<E> {

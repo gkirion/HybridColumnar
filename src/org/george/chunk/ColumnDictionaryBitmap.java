@@ -3,6 +3,7 @@ package org.george.chunk;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -219,6 +220,12 @@ public class ColumnDictionaryBitmap<E extends Comparable<E>> implements Column<E
 	@Override
 	public int getCardinality() {
 		return mappings.size();
+	}
+
+	@Override
+	public Iterator<Tuple2<E, Integer>> iterator() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
