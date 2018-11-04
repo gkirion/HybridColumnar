@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
@@ -150,14 +149,14 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	}
 
 	@Override
-	public List<E> filter(BitSet bitSet) {
-		List<E> filteredList = new ArrayList<>();
+	public Column<E> filter(BitSet bitSet) {
+		Column<E> column = new ColumnPlain<>();
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
-				filteredList.add(arrayList.get(i));
+				column.add(arrayList.get(i));
 			}
 		}
-		return filteredList;
+		return column;
 	}
 
 	public Integer count() {
@@ -235,8 +234,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 
 	@Override
 	public ColumnType type() {
-		// TODO Auto-generated method stub
-		return null;
+		return ColumnType.PLAIN;
 	}
 
 	@Override

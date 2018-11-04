@@ -1,8 +1,16 @@
 package org.george.hybridcolumnar.util;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 import org.george.hybridcolumnar.chunk.Chunk;
@@ -11,13 +19,16 @@ import org.george.hybridcolumnar.column.ColumnAnalyzer;
 import org.george.hybridcolumnar.column.ColumnBitmapRoaring;
 import org.george.hybridcolumnar.column.ColumnFactory;
 import org.george.hybridcolumnar.column.ColumnPlain;
+import org.george.hybridcolumnar.column.ColumnRle;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
+import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
 public class ChunkDriver {
 
-	public static void main(String[] args) {
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) throws IOException, ParseException {
 		/*
 		 * Tuple2<Integer, String> tuple2 = new Tuple2<Integer, String>(29, "george");
 		 * System.out.println(tuple2.getFirst());
@@ -493,14 +504,22 @@ public class ChunkDriver {
 		names.add("bob");
 		ages.add(10);
 		Chunk chunk = new Chunk();
-		chunk.addColumn(names);
-		chunk.addColumn(ages);
+		chunk.addColumn("names", names);
+		chunk.addColumn("ages", ages);
+		System.out.println(((ColumnRle<Integer>) ages).storageType());
+		System.out.println(((Column<String>) chunk.getColumn("names")).selectLessThan("george").cardinality());
+		System.out.println(((Column<Integer>) chunk.getColumn("ages")).selectLessThan(50).cardinality());
+		System.out.println(chunk.getColumn("names").selectLessThan("george").cardinality());
+		System.out.println(chunk.getColumn("ages").selectLessThan(50).cardinality());
+		BitSet bitset = chunk.getColumn("names").selectLessThan("george");
+		System.out.println(((Column<Integer>) chunk.getColumn("ages")).sum(bitset));
+		System.out.println(chunk.getColumn("ages").sum(bitset));
 		int counter = 0;
 		HashMap<ArrayList<Comparable<?>>, Integer> map = new HashMap<>();
 		for (Row row : chunk) {
 			ArrayList<Comparable<?>> tuple = new ArrayList<>();
-			tuple.add(row.get(0));
-			tuple.add(row.get(1));
+			tuple.add(row.get("names"));
+			tuple.add(row.get("ages"));
 			if (!map.containsKey(tuple)) {
 				map.put(tuple, 1);
 			} else {
@@ -516,11 +535,11 @@ public class ChunkDriver {
 		Row row = new Row();
 		Row row2 = new Row();
 		System.out.println(row.equals(row2));
-		row.add(3);
-		row.add("george");
+		row.add("age", 3);
+		row.add("name", "george");
 		row.setRunLength(2);
-		row2.add(3);
-		row2.add("george");
+		row2.add("age", 3);
+		row2.add("name", "george");
 		row.setRunLength(3);
 		System.out.println(row.equals(row2));
 		Column<Integer> column = new ColumnBitmapRoaring<>();
@@ -531,6 +550,8 @@ public class ChunkDriver {
 			column.add(n);
 			column2.add(n);
 		}
+		System.out.println("Column type: " + column.type());
+		System.out.println("Column type: " + column2.type());
 		System.out.println("SUM TEST: " + (column.sum().equals(column2.sum())));
 		System.out.println(column.sum());
 		System.out.println(column2.sum());
@@ -541,6 +562,239 @@ public class ChunkDriver {
 			}
 		}
 		System.out.println("ELEMENT TEST: " + ok);
+		RoaringBitmap roaring = new RoaringBitmap();
+		BitSet bitSet = new BitSet();
+		for (int i = 0; i < 10000000; i++) {
+			// int n = r.nextInt(10000000);
+			roaring.set(i);
+			bitSet.set(i);
+		}
+		System.out.println("Bitmap TEST: " + (roaring.convertToBitSet().equals(bitSet)));
+		roaring.convertToBitSet().and(bitSet);
+		System.out.println("Bitmap TEST: " + bitSet.cardinality());
+		Row list1 = new Row();
+		Row list2 = new Row();
+		list1.add("id", 1);
+		list1.add("serial", 5);
+		list1.add("state", 2);
+		list2.add("id", 2);
+		list2.add("serial", 5);
+		list2.add("state", 4);
+		System.out.println(list1);
+		ArrayList<Row> list3 = new ArrayList<>();
+		list3.add(list1);
+		list3.add(list2);
+		System.out.println(list3);
+		List<String> orderList = new ArrayList<>();
+		orderList.add("state");
+		orderList.add("id");
+		orderList.add("serial");
+		list3.sort(new RowComparator(orderList));
+		Chunk c = new Chunk();
+		c.addColumn("id", new ColumnRle<>());
+		c.addColumn("serial", new ColumnPlain<>());
+		c.addColumn("state", new ColumnBitmapRoaring<>());
+		for (Row row3 : list3) {
+			c.add(row3);
+		}
+		for (Row row3 : c) {
+			System.out.println("chunk: " + row3);
+		}
+		System.out.println(c.getColumn("serial").sum());
+		System.out.println(c.getColumn("state").selectMoreThan(2).cardinality());
+		System.out.println(list3);
+		RowAnalyzer rowAnalyzer = new RowAnalyzer(list3);
+		System.out.println(rowAnalyzer.analyze());
+		list3.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
+		System.out.println(list3);
+		FileReader file = new FileReader(
+				"C:\\Users\\george\\Downloads\\nyc-parking-tickets\\Parking_Violations_Issued_-_Fiscal_Year_2017.csv");
+		BufferedReader bufferedReader = new BufferedReader(file);
+
+		String headers = bufferedReader.readLine();
+		String[] hnames = headers.split(",");
+		System.out.println(headers);
+		System.out.println(hnames[2]);
+		System.out.println(hnames[3]);
+		System.out.println(hnames[1]);
+		System.out.println(hnames[4]);
+		System.out.println(hnames[6]);
+		System.out.println(hnames[7]);
+		System.out.println(hnames[19]);
+		List<Row> ticketList = new ArrayList<>();
+		String line = bufferedReader.readLine();
+		int index = 0;
+		SimpleDateFormat df = new SimpleDateFormat("mm/dd/yyyy");
+		long start = System.currentTimeMillis();
+		while (line != null) {
+			String[] tokens = line.split(",");
+
+			Row ticket = new Row();
+			ticket.add(hnames[2], tokens[2]);
+			ticket.add(hnames[3], tokens[3]);
+			ticket.add(hnames[1], tokens[1]);
+			ticket.add(hnames[4], df.parse(tokens[4]));
+			ticket.add(hnames[6], tokens[6]);
+			ticket.add(hnames[7], tokens[7]);
+			ticket.add(hnames[19], tokens[19]);
+			ticketList.add(ticket);
+
+			index++;
+			if (index > 100000)
+				break;
+			line = bufferedReader.readLine();
+
+		}
+		bufferedReader.close();
+		long end = System.currentTimeMillis();
+		System.out.println("time: " + (end - start) + " ms");
+		// System.out.println(ticketList);
+		RowAnalyzer analyzer = new RowAnalyzer(ticketList);
+		System.out.println(analyzer.analyze());
+		ticketList.sort(new RowComparator(analyzer.getOrderList(analyzer.analyze())));
+		Chunk ticketChunk = new Chunk();
+		ticketChunk.addColumn("Registration State", new ColumnRle<>());
+		ticketChunk.addColumn("Plate Type", new ColumnRle<>());
+		ticketChunk.addColumn("Issue Date", new ColumnRle<>());
+		ticketChunk.addColumn("Vehicle Body Type", new ColumnRle<>());
+		ticketChunk.addColumn("Vehicle Make", new ColumnRle<>());
+		ticketChunk.addColumn("Violation Time", new ColumnRle<>());
+		ticketChunk.addColumn("Plate ID", new ColumnPlain<>());
+		for (Row t : ticketList) {
+			ticketChunk.add(t);
+		}
+		start = System.currentTimeMillis();
+		int count2 = 0;
+		for (Row t : ticketList) {
+			if (t.get("Issue Date").equals((df.parse("07/10/2016")))) {
+				count2++;
+			}
+		}
+		System.out.println(count2);
+		end = System.currentTimeMillis();
+		System.out.println("time: " + (end - start) + " ms");
+		start = System.currentTimeMillis();
+		System.out.println(ticketChunk.getColumn("Issue Date").selectEquals(df.parse("07/10/2016")).cardinality());
+		end = System.currentTimeMillis();
+		System.out.println("time: " + (end - start) + " ms");
+		start = System.currentTimeMillis();
+		map = new HashMap<>();
+		for (Row t : ticketList) {
+			if (t.get("Issue Date").compareTo(df.parse("01/01/2016")) > 0
+					&& t.get("Issue Date").compareTo(df.parse("01/01/2017")) < 0) {
+				ArrayList<Comparable<?>> tuple = new ArrayList<>();
+				tuple.add(t.get("Registration State"));
+				if (!map.containsKey(tuple)) {
+					map.put(tuple, 1);
+				} else {
+					map.put(tuple, map.get(tuple) + 1);
+				}
+			}
+		}
+		System.out.println(map);
+		end = System.currentTimeMillis();
+		System.out.println("time: " + (end - start) + " ms");
+
+		start = System.currentTimeMillis();
+		map = new HashMap<>();
+		Chunk tempChunk = new Chunk();
+		tempChunk.addColumn("Registration State", ticketChunk.getColumn("Registration State"));
+		tempChunk.addColumn("Issue Date", ticketChunk.getColumn("Issue Date"));
+		int tmp = 0;
+		BitSet res = tempChunk.getColumn("Issue Date").selectBetween(df.parse("01/01/2016"), df.parse("01/01/2017"));
+		Iterator<Row> iter = tempChunk.iterator(res);
+		while (iter.hasNext()) {
+			Row t = iter.next();
+			tmp++;
+
+			ArrayList<Comparable<?>> tuple = new ArrayList<>();
+			tuple.add(t.get("Registration State"));
+			if (!map.containsKey(tuple)) {
+				map.put(tuple, t.getRunLength());
+			} else {
+				map.put(tuple, map.get(tuple) + t.getRunLength());
+			}
+
+		}
+		System.out.println(tmp);
+		System.out.println(map);
+		end = System.currentTimeMillis();
+		System.out.println("time: " + (end - start) + " ms");
+		System.out.println("07/10/2016".compareTo("06/14/2017"));
+		System.out.println(df.parse("07/10/2016").compareTo(df.parse("06/14/2017")));
+
+		// System.out.println(ticketList);
+	}
+
+	public static class RowComparator implements Comparator<Row> {
+
+		private List<String> orderList;
+
+		public RowComparator() {
+
+		}
+
+		public RowComparator(List<String> orderList) {
+			this.orderList = orderList;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public int compare(Row o1, Row o2) {
+			for (String key : orderList) {
+				if (o1.get(key).compareTo(o2.get(key)) < 0) {
+					return -1;
+				} else if (o1.get(key).compareTo(o2.get(key)) > 0) {
+					return 1;
+				}
+			}
+			return 0;
+		}
+
+	}
+
+	public static class RowAnalyzer {
+
+		private List<Row> rows;
+
+		public RowAnalyzer(List<Row> rows) {
+			this.rows = rows;
+		}
+
+		public ArrayList<Tuple2<String, Integer>> analyze() {
+			HashMap<String, HashMap<Comparable<?>, Boolean>> uniqueElements = new HashMap<>();
+			for (Row row : rows) {
+				for (String key : row) {
+					if (uniqueElements.get(key) == null) {
+						uniqueElements.put(key, new HashMap<>());
+					}
+					uniqueElements.get(key).put(row.get(key), true);
+				}
+			}
+			ArrayList<Tuple2<String, Integer>> cardinalities = new ArrayList<>();
+			for (String key : uniqueElements.keySet()) {
+				cardinalities.add(new Tuple2<String, Integer>(key, uniqueElements.get(key).size()));
+			}
+			cardinalities.sort(new Comparator<Tuple2<String, Integer>>() {
+
+				@Override
+				public int compare(Tuple2<String, Integer> o1, Tuple2<String, Integer> o2) {
+					return o1.getSecond().compareTo(o2.getSecond());
+				}
+
+			});
+			return cardinalities;
+
+		}
+
+		public List<String> getOrderList(ArrayList<Tuple2<String, Integer>> cardinalities) {
+			List<String> orderList = new ArrayList<>();
+			for (Tuple2<String, Integer> tuple : cardinalities) {
+				orderList.add(tuple.getFirst());
+			}
+			return orderList;
+		}
+
 	}
 
 }

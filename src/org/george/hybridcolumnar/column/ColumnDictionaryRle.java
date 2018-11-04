@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
@@ -282,8 +281,7 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 
 	@Override
 	public ColumnType type() {
-		// TODO Auto-generated method stub
-		return null;
+		return ColumnType.RLE_DICTIONARY;
 	}
 
 	@Override
@@ -293,7 +291,7 @@ public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, 
 	}
 
 	@Override
-	public List<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSet bitSet) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -201,14 +201,14 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	}
 
 	@Override
-	public List<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSet bitSet) {
 		List<E> filteredList = new ArrayList<>();
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
 				filteredList.add(get(i).getFirst());
 			}
 		}
-		return filteredList;
+		return null;
 	}
 
 	@Override
@@ -292,8 +292,11 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 
 	@Override
 	public ColumnType type() {
-		// TODO Auto-generated method stub
-		return null;
+		return ColumnType.RLE;
+	}
+
+	public Class<? extends ArrayList<?>> storageType() {
+		return (Class<? extends ArrayList<?>>) arrayList.getClass();
 	}
 
 	public Column<E> filter2(BitSet bitSet) {

@@ -1,7 +1,6 @@
 package org.george.hybridcolumnar.column;
 
 import java.util.BitSet;
-import java.util.List;
 import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
@@ -32,7 +31,7 @@ public interface Column<E extends Comparable<E>> extends Iterable<Tuple2<E, Inte
 
 	BitSet selectBetween(E from, E to);
 
-	List<E> filter(BitSet bitSet);
+	Column<E> filter(BitSet bitSet);
 
 	Double sum();
 

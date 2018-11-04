@@ -9,6 +9,7 @@ import org.george.hybridcolumnar.column.ColumnRle;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.domain.Tuple5;
 
+@SuppressWarnings("serial")
 public class Chunk3<T1 extends Comparable<T1>, T2 extends Comparable<T2>, T3 extends Comparable<T3>>
 		implements Iterable<Tuple5<T1, T2, T3, Integer, Integer>>, Serializable {
 

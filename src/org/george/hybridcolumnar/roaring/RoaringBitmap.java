@@ -7,7 +7,7 @@ import java.util.Iterator;
 
 public class RoaringBitmap implements Iterable<Container>, Serializable {
 
-	private short[] keys;
+	private static final long serialVersionUID = 1L;
 	private Container[] containers;
 	private int size;
 	private final int INITIAL_SIZE = 4; // initial capacity for containers
@@ -15,7 +15,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 
 	public RoaringBitmap() {
 		containers = new Container[INITIAL_SIZE];
-		keys = new short[INITIAL_SIZE];
 		size = 0;
 	}
 
@@ -102,10 +101,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		return containers;
 	}
 
-	public short[] getKeys() {
-		return keys;
-	}
-
 	public int getSize() {
 		return size;
 	}
@@ -136,7 +131,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			newBitmap.addContainer(otherContainers[k].getKey(), otherContainers[k]);
 		}
 		containers = newBitmap.getContainers();
-		keys = newBitmap.getKeys();
 		size = newBitmap.getSize();
 
 		/*
@@ -202,7 +196,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			newBitmap.addContainer(containers[k].getKey(), containers[k]);
 		}
 		containers = newBitmap.getContainers();
-		keys = newBitmap.getKeys();
 		size = newBitmap.getSize();
 	}
 
@@ -225,7 +218,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			}
 		}
 		containers = newBitmap.getContainers();
-		keys = newBitmap.getKeys();
 		size = newBitmap.getSize();
 	}
 
@@ -247,7 +239,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			}
 		}
 		containers = newBitmap.getContainers();
-		keys = newBitmap.getKeys();
 		size = newBitmap.getSize();
 	}
 
@@ -264,7 +255,6 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 
 	public void clear() {
 		containers = new Container[INITIAL_SIZE];
-		keys = new short[INITIAL_SIZE];
 		size = 0;
 	}
 

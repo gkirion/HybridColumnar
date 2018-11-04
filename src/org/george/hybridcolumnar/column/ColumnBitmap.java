@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -219,8 +218,7 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 
 	@Override
 	public ColumnType type() {
-		// TODO Auto-generated method stub
-		return null;
+		return ColumnType.BITMAP;
 	}
 
 	@Override
@@ -252,7 +250,7 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 	}
 
 	@Override
-	public List<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSet bitSet) {
 		// TODO Auto-generated method stub
 		return null;
 	}

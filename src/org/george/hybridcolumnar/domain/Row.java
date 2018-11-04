@@ -1,37 +1,40 @@
 package org.george.hybridcolumnar.domain;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Iterator;
 
-public class Row {
+@SuppressWarnings({ "serial", "rawtypes" })
+public class Row implements Comparable<Row>, Iterable<String>, Serializable {
 
-	private ArrayList<Comparable<?>> tuple;
+	private HashMap<String, Comparable> tuple;
 	private Integer index;
 	private Integer runLength;
 
 	public Row() {
-		tuple = new ArrayList<>();
+		tuple = new HashMap<>();
 		index = 0;
 		runLength = 0;
 	}
 
-	public void add(Comparable<?> data) {
-		tuple.add(data);
+	public void add(String key, Comparable data) {
+		tuple.put(key, data);
 	}
 
-	public void add(int index, Comparable<?> data) {
-		tuple.set(index, data);
+	public Comparable get(String key) {
+		return tuple.get(key);
 	}
 
-	public Comparable<?> get(int index) {
-		return tuple.get(index);
-	}
-
-	public ArrayList<Comparable<?>> getTuple() {
+	public HashMap<String, Comparable> getTuple() {
 		return tuple;
 	}
 
-	public void setTuple(ArrayList<Comparable<?>> tuple) {
+	public void setTuple(HashMap<String, Comparable> tuple) {
 		this.tuple = tuple;
+	}
+
+	public int size() {
+		return tuple.size();
 	}
 
 	public Integer getIndex() {
@@ -78,6 +81,41 @@ public class Row {
 	@Override
 	public String toString() {
 		return tuple.toString();
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked" })
+	public int compareTo(Row o) {
+		HashMap<String, Comparable> otherTuple = o.getTuple();
+		for (String key : tuple.keySet()) {
+			if (tuple.get(key).compareTo(otherTuple.get(key)) < 0) {
+				return -1;
+			} else if (tuple.get(key).compareTo(otherTuple.get(key)) > 0) {
+				return 1;
+			}
+		}
+		return 0;
+	}
+
+	@Override
+	public Iterator<String> iterator() {
+		return new RowIterator();
+	}
+
+	private class RowIterator implements Iterator<String> {
+
+		private Iterator<String> iterator = tuple.keySet().iterator();
+
+		@Override
+		public boolean hasNext() {
+			return iterator.hasNext();
+		}
+
+		@Override
+		public String next() {
+			return iterator.next();
+		}
+
 	}
 
 }

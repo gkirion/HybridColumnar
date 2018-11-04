@@ -1,42 +1,56 @@
 package org.george.hybridcolumnar.chunk;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.george.hybridcolumnar.column.Column;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.Tuple2;
 
+@SuppressWarnings("serial")
 public class Chunk implements Iterable<Row>, Serializable {
 
-	private ArrayList<Column<?>> columns;
+	@SuppressWarnings("rawtypes")
+	private HashMap<String, Column> columns;
 	private Integer id;
 
 	public Chunk() {
-		columns = new ArrayList<>();
+		columns = new HashMap<>();
 		id = null;
 	}
 
-	public void addColumn(Column<?> column) {
-		columns.add(column);
+	@SuppressWarnings("rawtypes")
+	public void addColumn(String name, Column column) {
+		columns.put(name, column);
 		id = (id == null || id > column.length() ? column.length() : id);
 	}
 
-	public Column<?> getColumn(int i) {
-		return columns.get(i);
+	@SuppressWarnings("rawtypes")
+	public Column getColumn(String name) {
+		return columns.get(name);
+	}
+
+	@SuppressWarnings("unchecked")
+	public void add(Row row) {
+		for (String key : row) {
+			columns.get(key).add(row.get(key));
+		}
+		id++;
 	}
 
 	public Row get(int i) {
 		Row result = new Row();
 		Tuple2<?, Integer> tuple;
 		Integer minLength = null;
-		for (Column<?> column : columns) {
+		for (String colName : columns.keySet()) {
+			Column<?> column = columns.get(colName);
 			tuple = column.get(i);
 			if (minLength == null || tuple.getSecond() < minLength) {
 				minLength = tuple.getSecond();
 			}
-			result.add(tuple.getFirst());
+			result.add(colName, tuple.getFirst());
 		}
 		result.setIndex(i);
 		result.setRunLength(minLength);
@@ -50,6 +64,10 @@ public class Chunk implements Iterable<Row>, Serializable {
 	@Override
 	public Iterator<Row> iterator() {
 		return new ChunkIterator();
+	}
+
+	public Iterator<Row> iterator(BitSet bitset) {
+		return new ChunkFilteredIterator(bitset);
 	}
 
 	private class ChunkIterator implements Iterator<Row> {
@@ -69,6 +87,33 @@ public class Chunk implements Iterable<Row>, Serializable {
 		public Row next() {
 			Row value = get(index);
 			index += (Integer) value.getRunLength();
+			return value;
+		}
+
+	}
+
+	private class ChunkFilteredIterator implements Iterator<Row> {
+
+		private int index;
+		private BitSet bitset;
+
+		public ChunkFilteredIterator(BitSet bitset) {
+			this.bitset = bitset;
+			index = bitset.nextSetBit(0);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return index >= 0 && index < id;
+		}
+
+		@Override
+		public Row next() {
+			Row value = get(index);
+			index += (Integer) value.getRunLength();
+			if (index < Integer.MAX_VALUE) {
+				index = bitset.nextSetBit(index);
+			}
 			return value;
 		}
 
