@@ -38,6 +38,8 @@ public interface Column<E extends Comparable<E>> extends Iterable<Tuple2<E, Inte
 	Double sum(int start, int end);
 
 	Double sum(BitSet bitSet);
+	
+	Double sum(int start, int end, BitSet bitSet);
 
 	Integer count(int start, int end);
 

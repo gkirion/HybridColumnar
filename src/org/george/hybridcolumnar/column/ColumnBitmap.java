@@ -255,4 +255,10 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 		return null;
 	}
 
+	@Override
+	public Double sum(int start, int end, BitSet bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

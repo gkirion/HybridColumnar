@@ -191,6 +191,17 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 		return sum;
 	}
+	
+	@Override
+	public Double sum(int start, int end, BitSet bitSet) {
+		Double sum = 0.0;
+		for (int i = start; i < end; i++) {
+			if (bitSet.get(i)) {
+				sum += ((Number) arrayList.get(i)).doubleValue();
+			}
+		}
+		return sum;
+	}
 
 	@Override
 	public Integer count(int start, int end) {
@@ -264,5 +275,6 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 
 	}
+
 
 }

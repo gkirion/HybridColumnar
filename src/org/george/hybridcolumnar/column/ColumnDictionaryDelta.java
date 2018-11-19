@@ -315,4 +315,10 @@ public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>
 		return null;
 	}
 
+	@Override
+	public Double sum(int start, int end, BitSet bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

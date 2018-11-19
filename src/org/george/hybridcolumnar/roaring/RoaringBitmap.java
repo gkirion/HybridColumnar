@@ -33,8 +33,8 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		Container container = getContainer(key);
 		if (container == null) { // if container doesn't exist, create it
 			container = new ContainerArray();
+			//container = new ContainerBitmap();
 			container.setKey(key);
-			// container = new ContainerBitmap();
 			addContainer(key, container);
 		}
 		container.set(i % CONTAINER_CAPACITY);

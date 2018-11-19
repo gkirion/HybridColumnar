@@ -243,6 +243,20 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		}
 		return sum;
 	}
+	
+	@Override
+	public Double sum(int start, int end, BitSet bitSet) {
+		Double sum = 0.0;
+		int startIndex = find(start, 0, arrayList.size() - 1);
+		int endIndex = find(end, 0, arrayList.size() - 1);
+		Tuple3<E, Integer, Integer> tuple;
+		for (int i = startIndex; i <= endIndex; i++) {
+			tuple = arrayList.get(i);
+			sum += ((Number) tuple.getFirst()).doubleValue()
+					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+		}
+		return sum;
+	}
 
 	@Override
 	public Integer count(int start, int end) {

@@ -60,12 +60,12 @@ public class ContainerBitmap implements Container, Serializable {
 
 	@Override
 	public Container or(Container container) {
-		/*
-		 * if (container instanceof ContainerArray) { return
-		 * or((ContainerArray)container); } else { return
-		 * or((ContainerBitmap)container); }
-		 */
-		Container container3 = new ContainerBitmap();
+		
+		  if (container instanceof ContainerArray) { return
+		  or((ContainerArray)container); } else { return
+		  or((ContainerBitmap)container); }
+		 
+/*		Container container3 = new ContainerBitmap();
 		Iterator<Integer> iterator1 = this.iterator();
 		Iterator<Integer> iterator2 = container.iterator();
 		while (iterator1.hasNext() && iterator2.hasNext()) {
@@ -87,7 +87,7 @@ public class ContainerBitmap implements Container, Serializable {
 		while (iterator2.hasNext()) {
 			container3.set(iterator2.next());
 		}
-		return container3;
+		return container3;*/
 	}
 
 	@Override
@@ -199,7 +199,9 @@ public class ContainerBitmap implements Container, Serializable {
 			if (index == Integer.MAX_VALUE) {
 				index = -1;
 			}
-			index = bitSet.nextSetBit(index + 1);
+			else {
+				index = bitSet.nextSetBit(index + 1);
+			}
 			return value;
 		}
 

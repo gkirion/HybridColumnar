@@ -295,4 +295,10 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 		return null;
 	}
 
+	@Override
+	public Double sum(int start, int end, BitSet bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

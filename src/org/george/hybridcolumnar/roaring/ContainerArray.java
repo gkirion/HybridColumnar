@@ -149,11 +149,11 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container or(Container container) {
-		/*
-		 * if (container instanceof ContainerArray) { return
-		 * or((ContainerArray)container); } else { return
-		 * or((ContainerBitmap)container); }
-		 */
+		
+/*		  if (container instanceof ContainerArray) { return
+		  or((ContainerArray)container); } else { return
+		  or((ContainerBitmap)container); }*/
+		 
 		Container container3 = new ContainerBitmap(key);
 		for (Integer val : this) {
 			container3.set(val);
@@ -166,18 +166,18 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container and(Container container) {
-		/*
-		 * if (container instanceof ContainerArray) { return
-		 * and((ContainerArray)container); } else { return
-		 * and((ContainerBitmap)container); }
-		 */
-		Container container3 = new ContainerArray(key);
+		
+		  if (container instanceof ContainerArray) { return
+		  and((ContainerArray)container); } else { return
+		  and((ContainerBitmap)container); }
+		 
+		/*Container container3 = new ContainerArray(key);
 		for (Integer element : this) {
 			if (container.get(element)) {
 				container3.set(element);
 			}
 		}
-		return container3;
+		return container3;*/
 	}
 
 	@Override
