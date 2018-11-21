@@ -29,6 +29,7 @@ public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>
 	}
 
 	public ColumnDictionaryDelta(int range, int offset) {
+		range = range < 2 ? 2 : range; // if range is smaller than 2 allocate 1 bit anyway
 		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
 		bitPacking = new BitPacking(numberOfBits);
 		dictionary = new Dictionary<>();
@@ -278,6 +279,11 @@ public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>
 	@Override
 	public ColumnType type() {
 		return ColumnType.DELTA_DICTIONARY;
+	}
+
+	@Override
+	public long sizeEstimation() {
+		return bitPacking.sizeEstimation() * 4;
 	}
 
 	@Override

@@ -191,7 +191,7 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 		return sum;
 	}
-	
+
 	@Override
 	public Double sum(int start, int end, BitSet bitSet) {
 		Double sum = 0.0;
@@ -249,6 +249,11 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 	}
 
 	@Override
+	public long sizeEstimation() {
+		return arrayList.size() * 4;
+	}
+
+	@Override
 	public Iterator<Tuple2<E, Integer>> iterator() {
 		return new ColumnPlainIterator();
 	}
@@ -275,6 +280,5 @@ public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializ
 		}
 
 	}
-
 
 }

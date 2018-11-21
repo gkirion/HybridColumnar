@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
+import org.george.hybridcolumnar.roaring.Container;
+import org.george.hybridcolumnar.roaring.ContainerArray;
 import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
 public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, Serializable {
@@ -228,6 +230,22 @@ public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, 
 	@Override
 	public ColumnType type() {
 		return ColumnType.ROARING;
+	}
+
+	@Override
+	public long sizeEstimation() {
+		long size = 0;
+		for (E key : mappings.keySet()) {
+			RoaringBitmap roaringBitmap = mappings.get(key);
+			for (Container container : roaringBitmap) {
+				if (container instanceof ContainerArray) {
+					size += container.getSize() * 2;
+				} else {
+					size += container.getSize() / 8;
+				}
+			}
+		}
+		return size;
 	}
 
 	@Override

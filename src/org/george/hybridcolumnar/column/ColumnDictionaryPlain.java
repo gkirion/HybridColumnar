@@ -223,6 +223,11 @@ public class ColumnDictionaryPlain<E extends Comparable<E>> implements Column<E>
 	}
 
 	@Override
+	public long sizeEstimation() {
+		return arrayList.size() * 4;
+	}
+
+	@Override
 	public Iterator<Tuple2<E, Integer>> iterator() {
 		// TODO Auto-generated method stub
 		return null;

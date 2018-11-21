@@ -222,6 +222,16 @@ public class ColumnBitmap<E extends Comparable<E>> implements Column<E>, Seriali
 	}
 
 	@Override
+	public long sizeEstimation() {
+		long size = 0;
+		for (E key : mappings.keySet()) {
+			BitSet bitSet = mappings.get(key);
+			size += bitSet.cardinality();
+		}
+		return size;
+	}
+
+	@Override
 	public Iterator<Tuple2<E, Integer>> iterator() {
 		return new ColumnBitmapIterator();
 	}

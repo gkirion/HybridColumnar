@@ -32,6 +32,7 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	}
 
 	public ColumnDelta(int range, int offset) {
+		range = range < 2 ? 2 : range; // if range is smaller than 2 allocate 1 bit anyway
 		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
 		bitPacking = new BitPacking(numberOfBits);
 		name = "";
@@ -258,6 +259,11 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	@Override
 	public ColumnType type() {
 		return ColumnType.DELTA;
+	}
+
+	@Override
+	public long sizeEstimation() {
+		return bitPacking.sizeEstimation() * 4;
 	}
 
 	@Override

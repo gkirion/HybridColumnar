@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
@@ -624,11 +623,14 @@ public class ChunkDriver {
 		System.out.println(hnames[6]);
 		System.out.println(hnames[7]);
 		System.out.println(hnames[19]);
-		List<Row> ticketList = new ArrayList<>();
-		int index = 0;
 		SimpleDateFormat df = new SimpleDateFormat("mm/dd/yyyy");
 		System.out.println("loading data into rows");
 		long start = System.currentTimeMillis();
+		int index = 0;
+		int chunkSize = 1000;
+		int lines = 0;
+		List<Row> ticketList = new ArrayList<>();
+		List<Chunk> chunkList = new ArrayList<>();
 		String line = bufferedReader.readLine();
 		while (line != null) {
 			String[] tokens = line.split(",");
@@ -646,8 +648,30 @@ public class ChunkDriver {
 				System.out.println(index);
 			}
 			index++;
-			if (index > 1000000)
+			if (index >= chunkSize) {
+				// analyze list by cardinality
+				RowAnalyzer analyzer = new RowAnalyzer(ticketList);
+				// sort list by cardinality
+				ticketList.sort(new RowComparator(analyzer.getOrderList(analyzer.analyze())));
+				Chunk ticketChunk = new Chunk();
+				ticketChunk.addColumn("Registration State", new ColumnRle<>());
+				ticketChunk.addColumn("Plate Type", new ColumnRle<>());
+				ticketChunk.addColumn("Issue Date", new ColumnRle<>());
+				ticketChunk.addColumn("Vehicle Body Type", new ColumnRle<>());
+				ticketChunk.addColumn("Vehicle Make", new ColumnRle<>());
+				ticketChunk.addColumn("Violation Time", new ColumnRle<>());
+				ticketChunk.addColumn("Plate ID", new ColumnPlain<>());
+				// load data into chunk
+				for (Row t : ticketList) {
+					ticketChunk.add(t);
+				}
+				ticketList.clear();
+				chunkList.add(ticketChunk);
+				index = 0;
+			}
+			if (lines > 1000000)
 				break;
+			lines++;
 			line = bufferedReader.readLine();
 
 		}
@@ -655,30 +679,17 @@ public class ChunkDriver {
 		long end = System.currentTimeMillis();
 		System.out.println("time: " + (end - start) + " ms");
 		// System.out.println(ticketList);
-		
+
 		System.out.println("analyzing data [getting cardinality]");
-		RowAnalyzer analyzer = new RowAnalyzer(ticketList);
-		System.out.println(analyzer.analyze());
-		
+		// System.out.println(analyzer.analyze());
+
 		System.out.println("sorting data by cardinality");
-		ticketList.sort(new RowComparator(analyzer.getOrderList(analyzer.analyze())));
-		
+
 		System.out.println("loading data into chunk");
-		Chunk ticketChunk = new Chunk();
-		ticketChunk.addColumn("Registration State", new ColumnRle<>());
-		ticketChunk.addColumn("Plate Type", new ColumnBitmapRoaring<>());
-		ticketChunk.addColumn("Issue Date", new ColumnBitmapRoaring<>());
-		ticketChunk.addColumn("Vehicle Body Type", new ColumnBitmapRoaring<>());
-		ticketChunk.addColumn("Vehicle Make", new ColumnBitmapRoaring<>());
-		ticketChunk.addColumn("Violation Time", new ColumnBitmapRoaring<>());
-		ticketChunk.addColumn("Plate ID", new ColumnPlain<>());
-		for (Row t : ticketList) {
-			ticketChunk.add(t);
-		}
-		
+
 		System.out.println("getting tickets issued on 07/10/2016 [uncompressed]");
 		start = System.currentTimeMillis();
-		int count2 = 0;
+		long count2 = 0;
 		for (Row t : ticketList) {
 			if (t.get("Issue Date").equals((df.parse("07/10/2016")))) {
 				count2++;
@@ -687,14 +698,22 @@ public class ChunkDriver {
 		System.out.println("tickets issued on 07/10/2016 [uncompressed]: " + count2);
 		end = System.currentTimeMillis();
 		System.out.println("tickets issued on 07/10/2016 [uncompressed] time: " + (end - start) + " ms");
-		
+
 		System.out.println("getting tickets issued on 07/10/2016 [compressed]");
 		start = System.currentTimeMillis();
-		count2 = ticketChunk.getColumn("Issue Date").selectEquals(df.parse("07/10/2016")).cardinality();
+		// count2 = ticketChunk.getColumn("Issue
+		// Date").selectEquals(df.parse("07/10/2016")).cardinality();
+		count2 = chunkList.stream().mapToLong(e -> {
+			try {
+				return e.getColumn("Issue Date").selectEquals(df.parse("07/10/2016")).cardinality();
+			} catch (ParseException e2) {
+				return 0;
+			}
+		}).sum();
 		System.out.println("tickets issued on 07/10/2016 [compressed]: " + count2);
 		end = System.currentTimeMillis();
 		System.out.println("tickets issued on 07/10/2016 [compressed] time: " + (end - start) + " ms");
-		
+
 		System.out.println("count tickets issued between 01/01/2016 and 01/01/2017 group by state [uncompressed]");
 		start = System.currentTimeMillis();
 		map = new HashMap<>();
@@ -712,36 +731,71 @@ public class ChunkDriver {
 		}
 		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [uncompressed]: " + map);
 		end = System.currentTimeMillis();
-		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [uncompressed] time: " + (end - start) + " ms");
+		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [uncompressed] time: "
+				+ (end - start) + " ms");
 
 		System.out.println("count tickets issued between 01/01/2016 and 01/01/2017 group by state [compressed]");
 		start = System.currentTimeMillis();
-		map = new HashMap<>();
-		Chunk tempChunk = new Chunk();
-		tempChunk.addColumn("Registration State", ticketChunk.getColumn("Registration State"));
-		//tempChunk.addColumn("Issue Date", ticketChunk.getColumn("Issue Date"));
-		int tmp = 0;
-		BitSet res = ticketChunk.getColumn("Issue Date").selectBetween(df.parse("01/01/2016"), df.parse("01/01/2017"));
-		Iterator<Row> iter = tempChunk.iterator();
-		while (iter.hasNext()) {
-			Row t = iter.next();
-			tmp++;
 
-			ArrayList<Comparable<?>> tuple = new ArrayList<>();
-			tuple.add(t.get("Registration State"));
-			if (!map.containsKey(tuple)) {
-				map.put(tuple, res.get(t.getIndex(), t.getIndex() + t.getRunLength()).cardinality());
-			} else {
-				map.put(tuple, map.get(tuple) + res.get(t.getIndex(), t.getIndex() + t.getRunLength()).cardinality());
+		final HashMap<ArrayList<Comparable<?>>, Integer> statesMap = new HashMap<>();
+		chunkList.stream().forEach(e -> {
+			Chunk tempChunk = new Chunk();
+			tempChunk.addColumn("Registration State", e.getColumn("Registration State"));
+			try {
+				final BitSet res = e.getColumn("Issue Date").selectBetween(df.parse("01/01/2016"),
+						df.parse("01/01/2017"));
+				tempChunk.forEach(t -> {
+					ArrayList<Comparable<?>> tuple = new ArrayList<>();
+					tuple.add(t.get("Registration State"));
+					if (!statesMap.containsKey(tuple)) {
+						statesMap.put(tuple, res.get(t.getIndex(), t.getIndex() + t.getRunLength()).cardinality());
+					} else {
+						statesMap.put(tuple, statesMap.get(tuple)
+								+ res.get(t.getIndex(), t.getIndex() + t.getRunLength()).cardinality());
+					}
+				});
+			} catch (ParseException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
 			}
-
-		}
-		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [compressed]: " + map);
+		});
+		System.out
+				.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [compressed]: " + statesMap);
 		end = System.currentTimeMillis();
-		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [compressed] time: " + (end - start) + " ms");
-		
+		System.out.println("tickets issued between 01/01/2016 and 01/01/2017 group by state [compressed] time: "
+				+ (end - start) + " ms");
+
 		System.out.println("07/10/2016".compareTo("06/14/2017"));
 		System.out.println(df.parse("07/10/2016").compareTo(df.parse("06/14/2017")));
+
+		List<Integer> list = new ArrayList<>();
+		list.add(1);
+		list.add(1);
+		list.add(2);
+		list.add(2);
+		list.add(2);
+		list.add(2);
+		list.add(3);
+		list.add(5);
+		Integer maxDelta = null;
+		Integer minDelta = null;
+		Integer previous = null;
+		for (Integer item : list) {
+			if (previous == null) {
+				previous = item;
+			}
+			if (minDelta == null || item - previous < minDelta) {
+				minDelta = item - previous;
+			}
+			if (maxDelta == null || item - previous > maxDelta) {
+				maxDelta = item - previous;
+			}
+			previous = item;
+		}
+		System.out.println("min delta: " + minDelta);
+		System.out.println("max delta: " + maxDelta);
+		System.out.println("range: " + (maxDelta - minDelta + 1));
+		System.out.println("offset: " + minDelta * (-1));
 
 		// System.out.println(ticketList);
 	}

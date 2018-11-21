@@ -68,6 +68,10 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 		return index;
 	}
 
+	public long sizeEstimation() {
+		return array.length;
+	}
+
 	public boolean isEmpty() {
 		return index == 0;
 	}

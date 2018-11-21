@@ -243,7 +243,7 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 		}
 		return sum;
 	}
-	
+
 	@Override
 	public Double sum(int start, int end, BitSet bitSet) {
 		Double sum = 0.0;
@@ -307,6 +307,11 @@ public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializab
 	@Override
 	public ColumnType type() {
 		return ColumnType.RLE;
+	}
+
+	@Override
+	public long sizeEstimation() {
+		return arrayList.size() * 12;
 	}
 
 	public Class<? extends ArrayList<?>> storageType() {

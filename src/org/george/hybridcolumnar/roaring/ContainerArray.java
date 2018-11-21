@@ -149,11 +149,13 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container or(Container container) {
-		
-/*		  if (container instanceof ContainerArray) { return
-		  or((ContainerArray)container); } else { return
-		  or((ContainerBitmap)container); }*/
-		 
+
+		/*
+		 * if (container instanceof ContainerArray) { return
+		 * or((ContainerArray)container); } else { return
+		 * or((ContainerBitmap)container); }
+		 */
+
 		Container container3 = new ContainerBitmap(key);
 		for (Integer val : this) {
 			container3.set(val);
@@ -166,18 +168,18 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public Container and(Container container) {
-		
-		  if (container instanceof ContainerArray) { return
-		  and((ContainerArray)container); } else { return
-		  and((ContainerBitmap)container); }
-		 
-		/*Container container3 = new ContainerArray(key);
-		for (Integer element : this) {
-			if (container.get(element)) {
-				container3.set(element);
-			}
+
+		if (container instanceof ContainerArray) {
+			return and((ContainerArray) container);
+		} else {
+			return and((ContainerBitmap) container);
 		}
-		return container3;*/
+
+		/*
+		 * Container container3 = new ContainerArray(key); for (Integer element : this)
+		 * { if (container.get(element)) { container3.set(element); } } return
+		 * container3;
+		 */
 	}
 
 	@Override
@@ -300,14 +302,14 @@ public class ContainerArray implements Container, Serializable {
 	}
 
 	@Override
-	public void clear() {
-		array = new short[INITIAL_CAPACITY];
-		cardinality = 0;
+	public int getLength() {
+		return (array[cardinality - 1] & 0xFFFF) + 1;
 	}
 
 	@Override
-	public int getLength() {
-		return (array[cardinality - 1] & 0xFFFF) + 1;
+	public void clear() {
+		array = new short[INITIAL_CAPACITY];
+		cardinality = 0;
 	}
 
 	@Override
