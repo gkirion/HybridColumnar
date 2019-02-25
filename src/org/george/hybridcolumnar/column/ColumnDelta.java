@@ -1,181 +1,190 @@
 package org.george.hybridcolumnar.column;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Predicate;
 
-import org.george.hybridcolumnar.bitpacking.BitPacking;
+import org.george.hybridcolumnar.delta.DeltaContainer;
 import org.george.hybridcolumnar.domain.Tuple2;
 
+@SuppressWarnings("serial")
 public class ColumnDelta implements Column<Integer>, Serializable {
 
-	private BitPacking bitPacking;
+	private List<DeltaContainer> deltaContainers;
+	private DeltaContainer currentContainer;
+	private final int MAX_SIZE = 1000;
 	private String name;
-	private int offset;
 	private Integer id;
 	private int last;
-	private int first;
 
 	public ColumnDelta() {
-		this(2);
-	}
-
-	public ColumnDelta(int range) {
-		this(range, 0);
+		this("");
 	}
 
 	public ColumnDelta(String name) {
-		this(2);
+		deltaContainers = new ArrayList<>();
+		currentContainer = null;
 		this.name = name;
-	}
-
-	public ColumnDelta(int range, int offset) {
-		range = range < 2 ? 2 : range; // if range is smaller than 2 allocate 1 bit anyway
-		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((range - 1));
-		bitPacking = new BitPacking(numberOfBits);
-		name = "";
-		this.offset = offset;
 		id = 0;
 		last = -1;
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void add(Integer item) {
 		if (id == 0) {
-			first = item;
 			last = item;
 		}
-		bitPacking.add(item - last + offset);
+		if (currentContainer == null || currentContainer.size() >= MAX_SIZE || item < last) {
+			currentContainer = new DeltaContainer(MAX_SIZE);
+			deltaContainers.add(currentContainer);
+		}
+		currentContainer.add(item);
 		last = item;
 		id++;
 	}
 
 	@Override
 	public Tuple2<Integer, Integer> get(int i) {
-		int value = first;
-		for (int j = 0; j <= i; j++) {
-			value += bitPacking.get(j) - offset;
+		int maxIndex = 0;
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			maxIndex += deltaContainer.size();
+			if (i < maxIndex) {
+				return new Tuple2<>(deltaContainer.get(i - maxIndex - deltaContainer.size()), 1);
+			}
 		}
-		return new Tuple2<>(value, 1);
+		return null;
 	}
 
+	@Override
 	public BitSet select(Predicate<Integer> predicate) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (predicate.test(value)) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (predicate.test(element)) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectEquals(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value == item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element == item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectNotEquals(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value != item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element == item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectLessThan(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value < item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element < item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectLessThanOrEquals(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value <= item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element <= item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectMoreThan(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value > item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element > item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectMoreThanOrEquals(Integer item) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value >= item) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element >= item) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
 
+	@Override
 	public BitSet selectBetween(Integer from, Integer to) {
 		BitSet bitSet = new BitSet();
 		int i = 0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (value >= from && value <= to) {
-				bitSet.set(i);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (element >= from && element <= to) {
+					bitSet.set(i);
+				}
+				i++;
 			}
-			i++;
 		}
 		return bitSet;
 	}
@@ -185,34 +194,37 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 		return sum(0, id);
 	}
 
+	@Override
 	public Double sum(int start, int end) {
 		int i = 0;
 		Double sum = 0.0;
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (i >= start && i < end) {
-				sum += value;
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (i >= start && i < end) {
+					sum += element;
+				}
+				i++;
 			}
-			i++;
 		}
 		return sum;
 	}
 
+	@Override
 	public Double sum(BitSet bitSet) {
 		int i = 0;
-		int value = first;
 		Double sum = 0.0;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (bitSet.get(i)) {
-				sum += value;
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				if (bitSet.get(i)) {
+					sum += element;
+				}
+				i++;
 			}
-			i++;
 		}
 		return sum;
 	}
 
+	@Override
 	public Integer count(int start, int end) {
 		return (end < id ? end : id) - start;
 	}
@@ -222,25 +234,17 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 		return avg(0, id);
 	}
 
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
 	}
 
 	@Override
 	public Double avg(BitSet bitSet) {
-		int i = 0;
-		int value = first;
-		Long sum = new Long(0);
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			if (bitSet.get(i)) {
-				sum += value;
-			}
-			i++;
-		}
-		return sum / (double) bitSet.cardinality();
+		return sum(bitSet) / bitSet.cardinality();
 	}
 
+	@Override
 	public int length() {
 		return id;
 	}
@@ -248,10 +252,10 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	@Override
 	public int cardinality() {
 		HashMap<Integer, Boolean> distinctMap = new HashMap<>();
-		int value = first;
-		for (Integer val : bitPacking) {
-			value += val - offset;
-			distinctMap.put(value, true);
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			for (Integer element : deltaContainer) {
+				distinctMap.put(element, true);
+			}
 		}
 		return distinctMap.size();
 	}
@@ -263,7 +267,11 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 
 	@Override
 	public long sizeEstimation() {
-		return bitPacking.sizeEstimation() * 4;
+		long size = 0;
+		for (DeltaContainer deltaContainer : deltaContainers) {
+			size += deltaContainer.sizeEstimation() * 4;
+		}
+		return size;
 	}
 
 	@Override
@@ -275,10 +283,13 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 
 		private int i;
 		private int value;
+		private Iterator<DeltaContainer> deltaContainersIterator;
+		private Iterator<Integer> deltaContainerIterator;
 
 		public ColumnDeltaIterator() {
 			i = 0;
-			value = first;
+			deltaContainersIterator = deltaContainers.iterator();
+			deltaContainerIterator = deltaContainersIterator.next().iterator();
 		}
 
 		@Override
@@ -288,8 +299,11 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 
 		@Override
 		public Tuple2<Integer, Integer> next() {
-			value += bitPacking.get(i) - offset;
+			value = deltaContainerIterator.next();
 			i++;
+			if (!deltaContainerIterator.hasNext() && hasNext()) {
+				deltaContainerIterator = deltaContainersIterator.next().iterator();
+			}
 			return new Tuple2<Integer, Integer>(value, 1);
 		}
 

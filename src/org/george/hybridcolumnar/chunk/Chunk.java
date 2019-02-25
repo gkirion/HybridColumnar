@@ -1,11 +1,15 @@
 package org.george.hybridcolumnar.chunk;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import org.george.hybridcolumnar.column.Column;
+import org.george.hybridcolumnar.column.ColumnPlain;
+import org.george.hybridcolumnar.column.ColumnRle;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.Tuple2;
 
@@ -13,26 +17,44 @@ import org.george.hybridcolumnar.domain.Tuple2;
 public class Chunk implements Iterable<Row>, Serializable {
 
 	@SuppressWarnings("rawtypes")
-	private HashMap<String, Column> columns;
+	private HashMap<String, Column<Comparable>> columns;
 	private Integer id;
 
 	public Chunk() {
 		columns = new HashMap<>();
 		id = null;
 	}
-
+	
 	@SuppressWarnings("rawtypes")
+	public static List<Chunk> chunkify(List<Row> partition, int chunkSize) {
+		Chunk chunk = null;
+		Row row;
+		List<Chunk> chunkList = new ArrayList<>();
+		for (int i = 0; i < partition.size(); i++) {
+			row = partition.get(i);
+			if (i % chunkSize == 0) {
+				chunk = new Chunk();
+				for (String key : row) {
+					chunk.addColumn(key, new ColumnRle());
+				}
+				chunkList.add(chunk);
+			}
+			chunk.add(row);
+		}
+		return chunkList;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void addColumn(String name, Column column) {
 		columns.put(name, column);
 		id = (id == null || id > column.length() ? column.length() : id);
 	}
 
 	@SuppressWarnings("rawtypes")
-	public Column getColumn(String name) {
+	public Column<Comparable> getColumn(String name) {
 		return columns.get(name);
 	}
 
-	@SuppressWarnings("unchecked")
 	public void add(Row row) {
 		for (String key : row) {
 			columns.get(key).add(row.get(key));
@@ -40,6 +62,7 @@ public class Chunk implements Iterable<Row>, Serializable {
 		id++;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public Row get(int i) {
 		Row result = new Row();
 		Tuple2<?, Integer> tuple;
@@ -50,7 +73,7 @@ public class Chunk implements Iterable<Row>, Serializable {
 			if (minLength == null || tuple.getSecond() < minLength) {
 				minLength = tuple.getSecond();
 			}
-			result.add(colName, tuple.getFirst());
+			result.add(colName, (Comparable) tuple.getFirst());
 		}
 		result.setIndex(i);
 		result.setRunLength(minLength);

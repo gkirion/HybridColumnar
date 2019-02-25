@@ -12,7 +12,7 @@ import org.george.hybridcolumnar.roaring.Container;
 import org.george.hybridcolumnar.roaring.ContainerArray;
 import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
-public class ColumnBitmapRoaring<E extends Comparable<E>> implements Column<E>, Serializable {
+public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Serializable {
 
 	private HashMap<E, RoaringBitmap> mappings;
 	private String name;

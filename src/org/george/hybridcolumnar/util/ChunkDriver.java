@@ -1,28 +1,18 @@
 package org.george.hybridcolumnar.util;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.george.hybridcolumnar.chunk.Chunk;
-import org.george.hybridcolumnar.column.Column;
-import org.george.hybridcolumnar.column.ColumnAnalyzer;
-import org.george.hybridcolumnar.column.ColumnBitmapRoaring;
-import org.george.hybridcolumnar.column.ColumnFactory;
+import org.george.hybridcolumnar.column.ColumnDelta;
 import org.george.hybridcolumnar.column.ColumnPlain;
-import org.george.hybridcolumnar.column.ColumnRle;
-import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.Tuple2;
-import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
 public class ChunkDriver {
 
@@ -450,7 +440,7 @@ public class ChunkDriver {
 		 * val : dlta) { counter += val.getFirst(); } et = System.currentTimeMillis();
 		 * System.out.println("time: " + (et - st)); System.out.println(counter);
 		 */
-		RoaringBitmap ror = new RoaringBitmap();
+/*		RoaringBitmap ror = new RoaringBitmap();
 		BitSet b = new BitSet();
 		b.set(0, 2);
 		int count = 0;
@@ -476,9 +466,9 @@ public class ChunkDriver {
 		System.out.println(ror.cardinality());
 		long st = System.currentTimeMillis();
 		ror.or(b);
-		/*
+		
 		 * RoaringBitmap ror3 = new RoaringBitmap(b); ror.or(ror3);
-		 */
+		 
 		long et = System.currentTimeMillis();
 		System.out.println("time: " + (et - st));
 		System.out.println(ror.cardinality());
@@ -795,9 +785,38 @@ public class ChunkDriver {
 		System.out.println("min delta: " + minDelta);
 		System.out.println("max delta: " + maxDelta);
 		System.out.println("range: " + (maxDelta - minDelta + 1));
-		System.out.println("offset: " + minDelta * (-1));
+		System.out.println("offset: " + minDelta * (-1));*/
 
 		// System.out.println(ticketList);
+		List<Integer> intList = new ArrayList<>();
+		Random r = new Random();
+		for (int i = 0; i < 10000010; i++) {
+			intList.add(r.nextInt(1000));
+		}
+		intList.sort(null);
+		ColumnPlain<Integer> plain = new ColumnPlain<>();
+		for (Integer element : intList) {
+			plain.add(element);
+		}
+		ColumnDelta delta = new ColumnDelta();
+		for (Integer element : intList) {
+			delta.add(element);
+		}
+		System.out.println("agg test 1: " + (plain.sum().equals(delta.sum())));
+		System.out.println("agg test 2: " + (plain.sum(538, 15674).equals(delta.sum(538, 15674))));
+		System.out.println("select test 1: " + (plain.selectLessThan(500).equals(delta.selectLessThan(500))));
+		System.out.println("select test 2: " + (plain.selectBetween(500, 700).equals(delta.selectBetween(500, 700))));
+		System.out.println("agg test 3: " + (plain.sum(plain.selectLessThan(500)).equals(delta.sum(delta.selectLessThan(500)))));
+		Iterator<Tuple2<Integer, Integer>> plainIterator = plain.iterator();
+		Iterator<Tuple2<Integer, Integer>> deltaIterator = delta.iterator();
+		while (plainIterator.hasNext() && deltaIterator.hasNext()) {
+			if (!plainIterator.next().equals(deltaIterator.next())) {
+				System.out.println("mismatch");
+			}
+		}
+		System.out.println(plain.sizeEstimation());
+		System.out.println(delta.sizeEstimation());
+
 	}
 
 	public static class RowComparator implements Comparator<Row> {

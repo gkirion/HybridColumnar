@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.domain.Tuple3;
 
-public class ColumnRle<E extends Comparable<E>> implements Column<E>, Serializable {
+public class ColumnRle<E extends Comparable> implements Column<E>, Serializable {
 
 	private ArrayList<Tuple3<E, Integer, Integer>> arrayList;
 	private String name;

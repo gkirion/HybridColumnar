@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 
+@SuppressWarnings("serial")
 public class BitPacking implements Iterable<Integer>, Serializable {
 
 	private int[] array;

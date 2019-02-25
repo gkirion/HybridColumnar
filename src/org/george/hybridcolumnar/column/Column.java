@@ -5,7 +5,8 @@ import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
 
-public interface Column<E extends Comparable<E>> extends Iterable<Tuple2<E, Integer>> {
+@SuppressWarnings("rawtypes")
+public interface Column<E extends Comparable> extends Iterable<Tuple2<E, Integer>> {
 
 	void setName(String name);
 

@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
 
-public class ColumnPlain<E extends Comparable<E>> implements Column<E>, Serializable {
+public class ColumnPlain<E extends Comparable> implements Column<E>, Serializable {
 
 	private ColumnType columnType;
 	private E type;

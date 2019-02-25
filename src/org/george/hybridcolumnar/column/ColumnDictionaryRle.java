@@ -11,7 +11,7 @@ import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.domain.Tuple3;
 import org.george.hybridcolumnar.util.Dictionary;
 
-public class ColumnDictionaryRle<E extends Comparable<E>> implements Column<E>, Serializable {
+public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Serializable {
 
 	private ArrayList<Tuple3<Integer, Integer, Integer>> arrayList;
 	private Dictionary<E> dictionary;

@@ -10,7 +10,7 @@ import org.george.hybridcolumnar.bitpacking.BitPacking;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.util.Dictionary;
 
-public class ColumnDictionaryDelta<E extends Comparable<E>> implements Column<E>, Serializable {
+public class ColumnDictionaryDelta<E extends Comparable> implements Column<E>, Serializable {
 
 	private BitPacking bitPacking;
 	private Dictionary<E> dictionary;

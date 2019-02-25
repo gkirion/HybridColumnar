@@ -2,8 +2,8 @@ package org.george.hybridcolumnar.domain;
 
 import java.io.Serializable;
 
-@SuppressWarnings("serial")
-public class Tuple2<E1 extends Comparable<E1>, E2 extends Comparable<E2>>
+@SuppressWarnings({ "serial", "rawtypes" })
+public class Tuple2<E1 extends Comparable, E2 extends Comparable>
 		implements Comparable<Tuple2<E1, E2>>, Serializable {
 
 	private E1 first;
@@ -38,6 +38,7 @@ public class Tuple2<E1 extends Comparable<E1>, E2 extends Comparable<E2>>
 		return 31 * (31 + (first == null ? 0 : first.hashCode())) + (second == null ? 0 : second.hashCode());
 	}
 
+	@SuppressWarnings("unchecked")
 	public boolean equals(Object obj) {
 		if (obj != null && this.getClass().equals(obj.getClass())) {
 			Tuple2<E1, E2> t = (Tuple2<E1, E2>) obj;
@@ -48,6 +49,7 @@ public class Tuple2<E1 extends Comparable<E1>, E2 extends Comparable<E2>>
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public int compareTo(Tuple2<E1, E2> o) {
 		if (first.compareTo(o.getFirst()) == 0) {

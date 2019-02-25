@@ -3,6 +3,7 @@
   <groupId>Chunk</groupId>
   <artifactId>Chunk</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>

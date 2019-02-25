@@ -2,7 +2,7 @@ package org.george.hybridcolumnar.column;
 
 public class ColumnFactory {
 
-	public <E extends Comparable<E>> Column<E> createColumn(ColumnAnalyzer<E> columnAnalyzer) {
+	public <E extends Comparable> Column<E> createColumn(ColumnAnalyzer<E> columnAnalyzer) {
 		// rules
 		return null;
 	}
@@ -28,7 +28,7 @@ public class ColumnFactory {
 			break;
 		case DELTA:
 			if (columnAnalyzer != null) {
-				column = (Column<E>) new ColumnDelta(columnAnalyzer.range(), columnAnalyzer.minDelta() * (-1));
+				column = (Column<E>) new ColumnDelta();
 			} else {
 				column = (Column<E>) new ColumnDelta();
 			}

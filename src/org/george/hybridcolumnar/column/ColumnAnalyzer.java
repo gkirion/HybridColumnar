@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class ColumnAnalyzer<E extends Comparable<E>> implements Iterable<E>, Serializable {
+public class ColumnAnalyzer<E extends Comparable> implements Iterable<E>, Serializable {
 
 	private ArrayList<E> arrayList;
 	private E type;

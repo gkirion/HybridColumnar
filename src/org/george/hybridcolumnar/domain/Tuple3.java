@@ -2,8 +2,8 @@ package org.george.hybridcolumnar.domain;
 
 import java.io.Serializable;
 
-@SuppressWarnings("serial")
-public class Tuple3<E1 extends Comparable<E1>, E2 extends Comparable<E2>, E3 extends Comparable<E3>>
+@SuppressWarnings({ "serial", "rawtypes" })
+public class Tuple3<E1 extends Comparable, E2 extends Comparable, E3 extends Comparable>
 		implements Comparable<Tuple3<E1, E2, E3>>, Serializable {
 
 	private E1 first;
