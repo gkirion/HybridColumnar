@@ -52,23 +52,24 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 		}
 		previous = item;
 		size++;
-		if (buffer.size() >= maxBufferSize) {
-			int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((maxDelta - minDelta));
-			numberOfBits = numberOfBits == 0 ? 1 : numberOfBits;
-			bitPacking = new BitPacking(numberOfBits);
-			previous = null;
-			for (Integer element : buffer) {
-				if (previous == null) {
-					bitPacking.add(0);
-				}
-				else {
-					bitPacking.add(element - previous);
-				}
-				previous = element;
-			}
-			buffer = null;
-		}
 	}
+	
+	public void flush() {
+		int numberOfBits = Integer.SIZE - Integer.numberOfLeadingZeros((maxDelta - minDelta));
+		numberOfBits = numberOfBits == 0 ? 1 : numberOfBits;
+		bitPacking = new BitPacking(numberOfBits);
+		previous = null;
+		for (Integer element : buffer) {
+			if (previous == null) {
+				bitPacking.add(0);
+			}
+			else {
+				bitPacking.add(element - previous);
+			}
+			previous = element;
+		}
+		buffer = null;
+	} 
 	
 	public Integer get(int i) {
 		if (bitPacking == null) {

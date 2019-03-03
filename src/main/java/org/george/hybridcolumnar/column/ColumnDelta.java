@@ -16,7 +16,7 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 
 	private List<DeltaContainer> deltaContainers;
 	private DeltaContainer currentContainer;
-	private final int MAX_SIZE = 1000;
+	private final int MAX_CONTAINER_SIZE = 1000;
 	private String name;
 	private Integer id;
 	private int last;
@@ -48,8 +48,11 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 		if (id == 0) {
 			last = item;
 		}
-		if (currentContainer == null || currentContainer.size() >= MAX_SIZE || item < last) {
-			currentContainer = new DeltaContainer(MAX_SIZE);
+		if (currentContainer == null || currentContainer.size() >= MAX_CONTAINER_SIZE || item < last) {
+			if (currentContainer != null) {
+				currentContainer.flush();
+			}
+			currentContainer = new DeltaContainer(MAX_CONTAINER_SIZE);
 			deltaContainers.add(currentContainer);
 		}
 		currentContainer.add(item);

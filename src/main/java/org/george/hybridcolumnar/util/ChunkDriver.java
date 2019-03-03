@@ -5,19 +5,21 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-import org.george.hybridcolumnar.column.ColumnDelta;
-import org.george.hybridcolumnar.column.ColumnPlain;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
+import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.george.hybridcolumnar.column.Column;
+import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.Tuple2;
+import org.george.hybridcolumnar.model.Model;
 
 public class ChunkDriver {
 
 	@SuppressWarnings("unchecked")
-	public static void main(String[] args) throws IOException, ParseException {
+	public static void main(String[] args) throws IOException, ParseException, InvalidKerasConfigurationException, UnsupportedKerasConfigurationException {
 		/*
 		 * Tuple2<Integer, String> tuple2 = new Tuple2<Integer, String>(29, "george");
 		 * System.out.println(tuple2.getFirst());
@@ -788,17 +790,19 @@ public class ChunkDriver {
 		System.out.println("offset: " + minDelta * (-1));*/
 
 		// System.out.println(ticketList);
+		
 		List<Integer> intList = new ArrayList<>();
 		Random r = new Random();
+		/*
 		for (int i = 0; i < 10000010; i++) {
-			intList.add(r.nextInt(1000));
+			intList.add(r.nextInt(10));
 		}
 		intList.sort(null);
 		ColumnPlain<Integer> plain = new ColumnPlain<>();
 		for (Integer element : intList) {
 			plain.add(element);
 		}
-		ColumnDelta delta = new ColumnDelta();
+		ColumnBitmapRoaring<Integer> delta = new ColumnBitmapRoaring<>();
 		for (Integer element : intList) {
 			delta.add(element);
 		}
@@ -806,17 +810,91 @@ public class ChunkDriver {
 		System.out.println("agg test 2: " + (plain.sum(538, 15674).equals(delta.sum(538, 15674))));
 		System.out.println("select test 1: " + (plain.selectLessThan(500).equals(delta.selectLessThan(500))));
 		System.out.println("select test 2: " + (plain.selectBetween(500, 700).equals(delta.selectBetween(500, 700))));
-		System.out.println("agg test 3: " + (plain.sum(plain.selectLessThan(500)).equals(delta.sum(delta.selectLessThan(500)))));
+		System.out.println("agg test 3: " + (plain.sum(plain.selectMoreThan(500)).equals(delta.sum(delta.selectMoreThan(500)))));
 		Iterator<Tuple2<Integer, Integer>> plainIterator = plain.iterator();
 		Iterator<Tuple2<Integer, Integer>> deltaIterator = delta.iterator();
 		while (plainIterator.hasNext() && deltaIterator.hasNext()) {
 			if (!plainIterator.next().equals(deltaIterator.next())) {
 				System.out.println("mismatch");
+				System.out.println(plainIterator.next() + " " + deltaIterator.next());
+
 			}
 		}
 		System.out.println(plain.sizeEstimation());
 		System.out.println(delta.sizeEstimation());
+		*/
+		String[] names = {"jo", "jack", "george", "giagkos", "nick", "fotini", "jill", "jane", "maria", "niki" ,"platon"};
+/*		Integer[] cardinalities = {50, 100, 500, 1800};
+		
+		for (Integer cardinality : cardinalities) {
+			Integer[] repetitions = {1, 50, 100, 1000};
+			for (Integer repetition : repetitions) {
+				List<Row> rowsFull = new ArrayList<>();
+				for (int rep = 1; rep <= repetition; rep++) {
+					List<Row> rows = new ArrayList<>();
+					for (int i = 0; i < 1000000 / repetition; i++) {
+						Row row = new Row();
+						//row.add("names", r.nextInt(names.length));
+						//row.add("age", r.nextInt(509));
+						row.add("id", r.nextInt(cardinality));
+						rows.add(row);
+					}
+					RowAnalyzer rowAnalyzer = new RowAnalyzer(rows);
+					rows.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
+					for (Row row : rows) {
+						rowsFull.add(row);
+					}
+				}
+				PrintWriter printWriter = new PrintWriter("C:\\Users\\george\\bestEncodings\\bestEncoding_" + cardinality + "_" + repetition + ".txt");
+				BufferedWriter bufferedWriter = new BufferedWriter(printWriter);
+				List<List<Row>> packs = Model.splitIntoPacks(rowsFull, 1000);
+				for (List<Row> pack : packs) {
+					HashMap<String, Column<Comparable>> columns = Model.splitIntoColumns(pack);
+					HashMap<String, ColumnType> bestEncoding = Model.findBestEncoding(pack);
+					System.out.println(bestEncoding);
+					for (String column : columns.keySet()) {
+						bufferedWriter.write(columns.get(column) + " " + bestEncoding.get(column) + "\n");
+					}
+				}
+				bufferedWriter.close();
+			}
+		}*/
 
+		List<Row> rowsFull = new ArrayList<>();
+		for (int rep = 1; rep <= 1; rep++) {
+			List<Row> rows = new ArrayList<>();
+			for (int i = 0; i < 1000000; i++) {
+				Row row = new Row();
+				row.add("names", r.nextInt(names.length));
+				row.add("age", r.nextInt(559));
+				row.add("id", r.nextInt(1806));
+				rows.add(row);
+			}
+			RowAnalyzer rowAnalyzer = new RowAnalyzer(rows);
+			rows.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
+			for (Row row : rows) {
+				rowsFull.add(row);
+			}
+		}
+
+		
+		Model model = new Model();
+		model.loadModel("column-model-full7.hdf5");
+		int i = 0, correct = 0;
+		for (List<Row> pack : Model.splitIntoPacks(rowsFull, 1000)) {
+			if (i > 100) break;
+
+			for (Column<Comparable> col : Model.splitIntoColumns(pack).values()) {
+				ColumnType prediction = model.predict(col);
+				ColumnType columnType = Model.findBestEncoding(col);
+				System.out.println("prediction: " + prediction + ", actual: " + columnType);
+				if (prediction == columnType) {
+					correct++;
+				}
+				i++;
+			}
+		}
+		System.out.println("accuracy:" + (correct / (double)i));
 	}
 
 	public static class RowComparator implements Comparator<Row> {

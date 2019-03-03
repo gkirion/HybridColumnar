@@ -7,11 +7,11 @@ public class ColumnFactory {
 		return null;
 	}
 
-	public <E extends Comparable<E>> Column<E> createColumn(ColumnType columnType) {
+	public static <E extends Comparable<E>> Column<E> createColumn(ColumnType columnType) {
 		return createColumn(null, columnType);
 	}
 
-	public <E extends Comparable<E>> Column<E> createColumn(ColumnAnalyzer<E> columnAnalyzer, ColumnType columnType) {
+	public static <E extends Comparable<E>> Column<E> createColumn(ColumnAnalyzer<E> columnAnalyzer, ColumnType columnType) {
 		Column<E> column;
 		switch (columnType) {
 		case RLE:

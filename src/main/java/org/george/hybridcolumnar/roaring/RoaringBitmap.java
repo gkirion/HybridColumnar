@@ -11,7 +11,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 	private Container[] containers;
 	private int size;
 	private final int INITIAL_SIZE = 4; // initial capacity for containers
-	private final int CONTAINER_CAPACITY = 65536; // max capacity of container
+	private final int CONTAINER_CAPACITY = 1000; // max capacity of container
 
 	public RoaringBitmap() {
 		containers = new Container[INITIAL_SIZE];
@@ -38,7 +38,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			addContainer(key, container);
 		}
 		container.set(i % CONTAINER_CAPACITY);
-		if (container instanceof ContainerArray && container.getCardinality() > 4096) { // container is dense, so
+		if (container instanceof ContainerArray && container.getCardinality() > CONTAINER_CAPACITY * 0.05) { // container is dense, so
 																						// convert it to bitmap
 			Container newContainer = ((ContainerArray) container).convertToBitmap();
 			replaceContainer(key, newContainer);
@@ -51,11 +51,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			int key = i / CONTAINER_CAPACITY; // in which container i belongs
 			Container container = getContainer(key);
 			if (container == null) { // if container doesn't exist, create it
-				if (end - start > 512) {
-					container = new ContainerBitmap();
-				} else {
-					container = new ContainerArray();
-				}
+				container = new ContainerArray();
 				container.setKey(key);
 				addContainer(key, container);
 			}
@@ -65,6 +61,11 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 				to = CONTAINER_CAPACITY;
 			}
 			container.set(from, to);
+			if (container instanceof ContainerArray && container.getCardinality() > CONTAINER_CAPACITY * 0.05) { // container is dense, so
+				// convert it to bitmap
+				Container newContainer = ((ContainerArray) container).convertToBitmap();
+				replaceContainer(key, newContainer);
+			}
 			i += (to - from);
 		}
 	}
@@ -120,7 +121,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 				i++;
 				j++;
 			} else {
-				newBitmap.addContainer(otherContainers[j].getKey(), otherContainers[j]);
+				newBitmap.addContainer(otherContainers[j].getKey(), otherContainers[j].get(0, CONTAINER_CAPACITY));
 				j++;
 			}
 		}
@@ -128,7 +129,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			newBitmap.addContainer(containers[k].getKey(), containers[k]);
 		}
 		for (int k = j; k < otherSize; k++) {
-			newBitmap.addContainer(otherContainers[k].getKey(), otherContainers[k]);
+			newBitmap.addContainer(otherContainers[k].getKey(), otherContainers[k].get(0, CONTAINER_CAPACITY));
 		}
 		containers = newBitmap.getContainers();
 		size = newBitmap.getSize();
