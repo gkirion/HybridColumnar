@@ -13,6 +13,7 @@ import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfig
 import org.george.hybridcolumnar.column.Column;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
+import org.george.hybridcolumnar.domain.RowArray;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.model.Model;
 
@@ -859,7 +860,7 @@ public class ChunkDriver {
 				bufferedWriter.close();
 			}
 		}*/
-
+		List<Integer> test = new ArrayList<>();
 		List<Row> rowsFull = new ArrayList<>();
 		for (int rep = 1; rep <= 1; rep++) {
 			List<Row> rows = new ArrayList<>();
@@ -868,10 +869,20 @@ public class ChunkDriver {
 				row.add("names", r.nextInt(names.length));
 				row.add("age", r.nextInt(559));
 				row.add("id", r.nextInt(1806));
+				
 				rows.add(row);
+				test.add(r.nextInt(10000));
 			}
 			RowAnalyzer rowAnalyzer = new RowAnalyzer(rows);
-			rows.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
+			List<String> orderList = rowAnalyzer.getOrderList(rowAnalyzer.analyze());
+			long start = System.currentTimeMillis();
+			rows.sort(new RowComparator(orderList));
+			long end = System.currentTimeMillis();
+			System.out.println("sort time: " + (end - start));
+			start = System.currentTimeMillis();
+			test.sort(null);
+			end = System.currentTimeMillis();
+			System.out.println("test time: " + (end - start));
 			for (Row row : rows) {
 				rowsFull.add(row);
 			}
@@ -881,14 +892,29 @@ public class ChunkDriver {
 		Model model = new Model();
 		model.loadModel("column-model-full7.hdf5");
 		int i = 0, correct = 0;
-		for (List<Row> pack : Model.splitIntoPacks(rowsFull, 1000)) {
-			if (i > 100) break;
+		List<List<Row>> packs = Model.splitIntoPacks(rowsFull, 1000);
+		long start = System.currentTimeMillis();
+
+		List<ColumnType> predictions = model.predict(packs);
+		
+		long end = System.currentTimeMillis();
+		System.out.println("total time: " + (end - start));
+		
+		for (List<Row> pack : packs) {
 
 			for (Column<Comparable> col : Model.splitIntoColumns(pack).values()) {
-				ColumnType prediction = model.predict(col);
+				//long start = System.currentTimeMillis();
+				//ColumnType prediction = model.predict(col);
+				//long end = System.currentTimeMillis();
+				//System.out.println("predicition time: " + (end - start));
+				
+				//start = System.currentTimeMillis();
 				ColumnType columnType = Model.findBestEncoding(col);
-				System.out.println("prediction: " + prediction + ", actual: " + columnType);
-				if (prediction == columnType) {
+				//end = System.currentTimeMillis();
+				//System.out.println("best encoding time: " + (end - start));
+
+				System.out.println("prediction: " + predictions.get(i) + ", actual: " + columnType);
+				if (predictions.get(i) == columnType) {
 					correct++;
 				}
 				i++;
@@ -916,6 +942,33 @@ public class ChunkDriver {
 				if (o1.get(key).compareTo(o2.get(key)) < 0) {
 					return -1;
 				} else if (o1.get(key).compareTo(o2.get(key)) > 0) {
+					return 1;
+				}
+			}
+			return 0;
+		}
+
+	}
+	
+	public static class RowArrayComparator implements Comparator<RowArray> {
+
+		private List<Integer> orderList;
+
+		public RowArrayComparator() {
+
+		}
+
+		public RowArrayComparator(List<Integer> orderList) {
+			this.orderList = orderList;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public int compare(RowArray o1, RowArray o2) {
+			for (Integer index : orderList) {
+				if (o1.get(index).compareTo(o2.get(index)) < 0) {
+					return -1;
+				} else if (o1.get(index).compareTo(o2.get(index)) > 0) {
 					return 1;
 				}
 			}
@@ -957,7 +1010,7 @@ public class ChunkDriver {
 			return cardinalities;
 
 		}
-
+		
 		public List<String> getOrderList(ArrayList<Tuple2<String, Integer>> cardinalities) {
 			List<String> orderList = new ArrayList<>();
 			for (Tuple2<String, Integer> tuple : cardinalities) {
@@ -965,7 +1018,52 @@ public class ChunkDriver {
 			}
 			return orderList;
 		}
-
 	}
+		
+		public static class RowArrayAnalyzer {
+
+			private List<RowArray> rows;
+
+			public RowArrayAnalyzer(List<RowArray> rows) {
+				this.rows = rows;
+			}
+
+			public ArrayList<Tuple2<Integer, Integer>> analyze() {
+				HashMap<Integer, HashMap<Comparable<?>, Boolean>> uniqueElements = new HashMap<>();
+				for (RowArray row : rows) {
+					int i = 0;
+					for (Comparable item : row) {
+						if (uniqueElements.get(i) == null) {
+							uniqueElements.put(i, new HashMap<>());
+						}
+						uniqueElements.get(i).put(item, true);
+						i++;
+					}
+				}
+				ArrayList<Tuple2<Integer, Integer>> cardinalities = new ArrayList<>();
+				
+				for (int i = 0; i < uniqueElements.size(); i++) {
+					cardinalities.add(new Tuple2<Integer, Integer>(i, uniqueElements.get(i).size()));
+				}
+				cardinalities.sort(new Comparator<Tuple2<Integer, Integer>>() {
+
+					@Override
+					public int compare(Tuple2<Integer, Integer> o1, Tuple2<Integer, Integer> o2) {
+						return o1.getSecond().compareTo(o2.getSecond());
+					}
+
+				});
+				return cardinalities;
+
+			}
+			
+			public List<Integer> getOrderArrayList(ArrayList<Tuple2<Integer, Integer>> cardinalities) {
+				List<Integer> orderList = new ArrayList<>();
+				for (Tuple2<Integer, Integer> tuple : cardinalities) {
+					orderList.add(tuple.getFirst());
+				}
+				return orderList;
+			}
+		}
 
 }

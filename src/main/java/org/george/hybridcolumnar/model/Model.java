@@ -89,15 +89,66 @@ public class Model {
 	}
 	
 	@SuppressWarnings("rawtypes")
+	public List<ColumnType> predict(List<List<Row>> packs) {
+		int samples = 0, sampleLength = 0;
+		for (List<Row> pack : packs) {
+			HashMap<String, Column<Comparable>> columns = Model.splitIntoColumns(pack);
+			samples += columns.size();
+			for (Column<Comparable> column : columns.values()) {
+				if (column.length() > sampleLength) {
+					sampleLength = column.length();
+				}
+			}
+		}
+		INDArray summary = Nd4j.zeros(samples, sampleLength);
+		int i = 0;
+		for (List<Row> pack : packs) {
+			HashMap<String, Column<Comparable>> columns = Model.splitIntoColumns(pack);
+			for (Column<Comparable> column : columns.values()) {
+				INDArray col = Nd4j.zeros(sampleLength);
+				int j = 0;
+				for (Tuple2<Comparable, Integer> item : column) {
+					col.putScalar(new int[] {j}, (Integer)item.getFirst());
+					j++;
+				}
+				summary.addRowVector(col);
+				i++;
+			}
+		}
+		
+		long start = System.currentTimeMillis();
+		int[] prediction = model.predict(summary);
+		long end = System.currentTimeMillis();
+		System.out.println("prediction time: " + (end - start));
+		
+		List<ColumnType> predictions = new ArrayList<>();
+		for (i = 0; i < prediction.length; i++) {
+			predictions.add(encodings.get(prediction[i]));
+		}
+		return predictions;
+	}
+	
+	@SuppressWarnings("rawtypes")
 	public ColumnType predict(Column<Comparable> column) {
 		int size = column.length();
 		INDArray summary = Nd4j.zeros(size);
 		int i = 0;
+		long start = System.currentTimeMillis();
 		for (Tuple2<Comparable, Integer> item : column) {
 			summary.putScalar(new int[] {i}, (Integer)item.getFirst());
 			i++;
 		}
+		long end = System.currentTimeMillis();
+		System.out.println("loading time: " + (end - start));
+		start = System.currentTimeMillis();
 		INDArray prediction = model.output(summary);
+		int[] test = model.predict(summary);
+		Nd4j.zeros(10,10);
+		for (i = 0; i < test.length; i++) {
+			System.out.println(test[i]);
+		}
+		end = System.currentTimeMillis();
+		System.out.println("prediction time: " + (end - start));
 		Double max = null;
 		int index = 0;
 		for (i = 0; i < prediction.length(); i++) {
