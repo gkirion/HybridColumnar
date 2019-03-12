@@ -70,7 +70,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 	}
 
 	public long sizeEstimation() {
-		return array.length;
+		return array.length * 4;
 	}
 
 	public boolean isEmpty() {

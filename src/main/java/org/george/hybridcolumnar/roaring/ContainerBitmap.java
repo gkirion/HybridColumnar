@@ -162,7 +162,7 @@ public class ContainerBitmap implements Container, Serializable {
 
 	@Override
 	public int getSize() {
-		return bitSet.cardinality();
+		return 8 + bitSet.cardinality() / 8;
 	}
 
 	@Override

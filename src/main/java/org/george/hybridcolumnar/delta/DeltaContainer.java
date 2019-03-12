@@ -90,9 +90,9 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 	
 	public long sizeEstimation() {
 		if (bitPacking == null) {
-			return size();
+			return 16 + size() * 4;
 		}
-		return bitPacking.sizeEstimation();
+		return 16 + bitPacking.sizeEstimation();
 	}
 
 	@Override

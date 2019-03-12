@@ -68,7 +68,7 @@ public class Model {
 			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING) {
 				continue;
 			}
-			Column<Comparable> compressedColumn = ColumnFactory.createColumn(columnType);
+			Column<Comparable> compressedColumn = ColumnFactory.createColumn(columnType, column.getName(), 1000);
 			for (Tuple2<Comparable, Integer> item : column) {
 				compressedColumn.add(item.getFirst());
 			}
@@ -166,7 +166,7 @@ public class Model {
 		for (Row row : rows) {
 			for (String key : row) { 
 				if (columns.get(key) == null) {
-					columns.put(key, ColumnFactory.createColumn(ColumnType.PLAIN));
+					columns.put(key, ColumnFactory.createColumn(ColumnType.PLAIN, key));
 				}
 				columns.get(key).add(row.get(key));
 			}

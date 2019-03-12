@@ -9,22 +9,31 @@ import java.util.function.Predicate;
 
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.roaring.Container;
-import org.george.hybridcolumnar.roaring.ContainerArray;
 import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
 public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Serializable {
 
 	private HashMap<E, RoaringBitmap> mappings;
+	private int containerCapacity;
 	private String name;
 	private Integer id;
 
 	public ColumnBitmapRoaring() {
 		this("");
 	}
+	
+	public ColumnBitmapRoaring(int containerCapacity) {
+		this("", containerCapacity);
+	}
 
 	public ColumnBitmapRoaring(String name) {
+		this(name, 65536);
+	}
+	
+	public ColumnBitmapRoaring(String name, int containerCapacity) {
 		mappings = new HashMap<>();
 		this.name = name;
+		this.containerCapacity = containerCapacity;
 		id = 0;
 	}
 
@@ -41,7 +50,7 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	@Override
 	public void add(E item) {
 		if (!mappings.containsKey(item)) {
-			mappings.put(item, new RoaringBitmap());
+			mappings.put(item, new RoaringBitmap(containerCapacity));
 		}
 		mappings.get(item).set(id);
 		id++;
@@ -71,6 +80,7 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		return newEColumn;
 	}
 
+	@Override
 	public BitSet select(Predicate<E> predicate) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
@@ -237,12 +247,9 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		long size = 0;
 		for (E key : mappings.keySet()) {
 			RoaringBitmap roaringBitmap = mappings.get(key);
+			size += 8;
 			for (Container container : roaringBitmap) {
-				if (container instanceof ContainerArray) {
-					size += container.getSize() * 2;
-				} else {
-					size += container.getSize() / 8;
-				}
+				size += container.getSize();
 			}
 		}
 		return size;

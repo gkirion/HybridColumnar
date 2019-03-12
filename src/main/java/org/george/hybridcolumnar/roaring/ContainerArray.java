@@ -298,7 +298,7 @@ public class ContainerArray implements Container, Serializable {
 
 	@Override
 	public int getSize() {
-		return cardinality;
+		return 16 + cardinality * 2;
 	}
 
 	@Override

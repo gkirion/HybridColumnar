@@ -11,6 +11,7 @@ import java.util.Random;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
 import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
 import org.george.hybridcolumnar.column.Column;
+import org.george.hybridcolumnar.column.ColumnFactory;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.RowArray;
@@ -867,9 +868,10 @@ public class ChunkDriver {
 			for (int i = 0; i < 1000000; i++) {
 				Row row = new Row();
 				row.add("names", r.nextInt(names.length));
-				row.add("age", r.nextInt(559));
-				row.add("id", r.nextInt(1806));
-				
+				row.add("age", r.nextInt(100));
+				//row.add("t", r.nextInt(806));
+				//row.add("id", r.nextInt(1806));
+
 				rows.add(row);
 				test.add(r.nextInt(10000));
 			}
@@ -895,11 +897,30 @@ public class ChunkDriver {
 		List<List<Row>> packs = Model.splitIntoPacks(rowsFull, 1000);
 		long start = System.currentTimeMillis();
 
-		List<ColumnType> predictions = model.predict(packs);
+		//List<ColumnType> predictions = model.predict(packs);
 		
 		long end = System.currentTimeMillis();
 		System.out.println("total time: " + (end - start));
 		
+		HashMap<String, Integer> rleMap = new HashMap<>();
+		HashMap<String, Integer> deltaMap = new HashMap<>();
+		HashMap<String, Integer> roaringMap = new HashMap<>();
+		
+		rleMap.put("names", 0);
+		rleMap.put("age", 0);
+		rleMap.put("id", 0);
+		rleMap.put("t", 0);
+
+		deltaMap.put("names", 0);
+		deltaMap.put("age", 0);
+		deltaMap.put("id", 0);
+		deltaMap.put("t", 0);
+
+		roaringMap.put("names", 0);
+		roaringMap.put("age", 0);
+		roaringMap.put("id", 0);
+		roaringMap.put("t", 0);
+		long totalSize = 0;
 		for (List<Row> pack : packs) {
 
 			for (Column<Comparable> col : Model.splitIntoColumns(pack).values()) {
@@ -910,16 +931,38 @@ public class ChunkDriver {
 				
 				//start = System.currentTimeMillis();
 				ColumnType columnType = Model.findBestEncoding(col);
+				Column<Comparable> bestColumn = ColumnFactory.createColumn(columnType);
+				for (Tuple2<Comparable, Integer> t : col) {
+					bestColumn.add(t.getFirst());
+				}
+				totalSize += bestColumn.sizeEstimation();
+				if (columnType == ColumnType.RLE) {
+					System.out.println(col.getName());
+					System.out.println(rleMap.get(col.getName()));
+					rleMap.put(col.getName(), rleMap.get(col.getName()) + 1);
+				}
+				else if (columnType == ColumnType.DELTA) {
+					deltaMap.put(col.getName(), deltaMap.get(col.getName()) + 1);
+				}
+				else if (columnType == ColumnType.ROARING) {
+					roaringMap.put(col.getName(), roaringMap.get(col.getName()) + 1);
+				}
+				
 				//end = System.currentTimeMillis();
 				//System.out.println("best encoding time: " + (end - start));
 
-				System.out.println("prediction: " + predictions.get(i) + ", actual: " + columnType);
+				/*System.out.println("prediction: " + predictions.get(i) + ", actual: " + columnType);
 				if (predictions.get(i) == columnType) {
 					correct++;
-				}
+				}*/
 				i++;
 			}
 		}
+		System.out.println(rleMap);
+		System.out.println(deltaMap);
+		System.out.println(roaringMap);
+		System.out.println("total size: " + totalSize);
+
 		System.out.println("accuracy:" + (correct / (double)i));
 	}
 

@@ -11,10 +11,16 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 	private Container[] containers;
 	private int size;
 	private final int INITIAL_SIZE = 4; // initial capacity for containers
-	private final int CONTAINER_CAPACITY = 1000; // max capacity of container
+	private final int MAX_CONTAINER_CAPACITY = 65536;
+	private int containerCapacity; // max capacity of container
 
 	public RoaringBitmap() {
+		this(1000);
+	}
+	
+	public RoaringBitmap(int containerCapacity) {
 		containers = new Container[INITIAL_SIZE];
+		this.containerCapacity = containerCapacity < MAX_CONTAINER_CAPACITY ?  containerCapacity : MAX_CONTAINER_CAPACITY;
 		size = 0;
 	}
 
@@ -29,7 +35,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 	}
 
 	public void set(int i) {
-		int key = i / CONTAINER_CAPACITY; // in which container i belongs
+		int key = i / containerCapacity; // in which container i belongs
 		Container container = getContainer(key);
 		if (container == null) { // if container doesn't exist, create it
 			container = new ContainerArray();
@@ -37,8 +43,8 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			container.setKey(key);
 			addContainer(key, container);
 		}
-		container.set(i % CONTAINER_CAPACITY);
-		if (container instanceof ContainerArray && container.getCardinality() > CONTAINER_CAPACITY * 0.05) { // container is dense, so
+		container.set(i % containerCapacity);
+		if (container instanceof ContainerArray && container.getCardinality() > containerCapacity * 0.05) { // container is dense, so
 																						// convert it to bitmap
 			Container newContainer = ((ContainerArray) container).convertToBitmap();
 			replaceContainer(key, newContainer);
@@ -48,20 +54,20 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 	public void set(int start, int end) {
 		int i = start;
 		while (i < end) {
-			int key = i / CONTAINER_CAPACITY; // in which container i belongs
+			int key = i / containerCapacity; // in which container i belongs
 			Container container = getContainer(key);
 			if (container == null) { // if container doesn't exist, create it
 				container = new ContainerArray();
 				container.setKey(key);
 				addContainer(key, container);
 			}
-			int from = Integer.max(key * CONTAINER_CAPACITY, start) % CONTAINER_CAPACITY; // start key inside container
-			int to = Integer.min((key + 1) * CONTAINER_CAPACITY, end) % CONTAINER_CAPACITY; // end key inside container
+			int from = Integer.max(key * containerCapacity, start) % containerCapacity; // start key inside container
+			int to = Integer.min((key + 1) * containerCapacity, end) % containerCapacity; // end key inside container
 			if (to <= from) {
-				to = CONTAINER_CAPACITY;
+				to = containerCapacity;
 			}
 			container.set(from, to);
-			if (container instanceof ContainerArray && container.getCardinality() > CONTAINER_CAPACITY * 0.05) { // container is dense, so
+			if (container instanceof ContainerArray && container.getCardinality() > containerCapacity * 0.05) { // container is dense, so
 				// convert it to bitmap
 				Container newContainer = ((ContainerArray) container).convertToBitmap();
 				replaceContainer(key, newContainer);
@@ -71,23 +77,23 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 	}
 
 	public boolean get(int i) {
-		int key = i / CONTAINER_CAPACITY; // in which container i belongs
+		int key = i / containerCapacity; // in which container i belongs
 		Container container = getContainer(key);
 		if (container == null) {
 			return false;
 		}
-		return container.get(i % CONTAINER_CAPACITY);
+		return container.get(i % containerCapacity);
 	}
 
 	public RoaringBitmap get(int start, int end) {
 		RoaringBitmap roaringBitmap = new RoaringBitmap();
 		for (int i = 0; i < size; i++) {
 			int key = containers[i].getKey();
-			if ((key + 1) * CONTAINER_CAPACITY > start && key * CONTAINER_CAPACITY < end) {
-				int from = Integer.max(key * CONTAINER_CAPACITY, start) % CONTAINER_CAPACITY;
-				int to = Integer.min((key + 1) * CONTAINER_CAPACITY, end) % CONTAINER_CAPACITY;
+			if ((key + 1) * containerCapacity > start && key * containerCapacity < end) {
+				int from = Integer.max(key * containerCapacity, start) % containerCapacity;
+				int to = Integer.min((key + 1) * containerCapacity, end) % containerCapacity;
 				if (to <= from) {
-					to = CONTAINER_CAPACITY;
+					to = containerCapacity;
 				}
 				Container container = containers[i].get(from, to);
 				// if (container.getCardinality() == 0)
@@ -121,7 +127,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 				i++;
 				j++;
 			} else {
-				newBitmap.addContainer(otherContainers[j].getKey(), otherContainers[j].get(0, CONTAINER_CAPACITY));
+				newBitmap.addContainer(otherContainers[j].getKey(), otherContainers[j].get(0, containerCapacity));
 				j++;
 			}
 		}
@@ -129,7 +135,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			newBitmap.addContainer(containers[k].getKey(), containers[k]);
 		}
 		for (int k = j; k < otherSize; k++) {
-			newBitmap.addContainer(otherContainers[k].getKey(), otherContainers[k].get(0, CONTAINER_CAPACITY));
+			newBitmap.addContainer(otherContainers[k].getKey(), otherContainers[k].get(0, containerCapacity));
 		}
 		containers = newBitmap.getContainers();
 		size = newBitmap.getSize();
@@ -166,27 +172,27 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		int i = bitSet.nextSetBit(0);
 		int j = 0;
 		while (i >= 0) {
-			int key = i / CONTAINER_CAPACITY; // in which container i belongs
+			int key = i / containerCapacity; // in which container i belongs
 			if (j < size && (containers[j].getKey() < key)) { // roaring container is smaller, so insert it first
 				newBitmap.addContainer(containers[j].getKey(), containers[j]);
 				j++;
 			} else if (j < size && (containers[j].getKey() == key)) { // containers have the same index, so OR them
 				Container container = containers[j]
-						.or(bitSet.get(key * CONTAINER_CAPACITY, (key + 1) * CONTAINER_CAPACITY));
+						.or(bitSet.get(key * containerCapacity, (key + 1) * containerCapacity));
 				newBitmap.addContainer(container.getKey(), container);
 				i = bitSet.nextSetBit(i + 1);
 				if (i >= 0) {
-					i = Integer.max(i, (key + 1) * CONTAINER_CAPACITY);
+					i = Integer.max(i, (key + 1) * containerCapacity);
 				}
 				j++;
 			} else { // bitset is smaller, so create a container for it and insert it first
 				Container container = new ContainerBitmap(
-						bitSet.get(key * CONTAINER_CAPACITY, (key + 1) * CONTAINER_CAPACITY));
+						bitSet.get(key * containerCapacity, (key + 1) * containerCapacity));
 				container.setKey(key);
 				newBitmap.addContainer(container.getKey(), container);
 				i = bitSet.nextSetBit(i + 1);
 				if (i >= 0) {
-					i = Integer.max(i, (key + 1) * CONTAINER_CAPACITY);
+					i = Integer.max(i, (key + 1) * containerCapacity);
 				}
 			}
 			if (i == Integer.MAX_VALUE) {
@@ -204,10 +210,10 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		RoaringBitmap newBitmap = new RoaringBitmap();
 		int i = bitSet.nextSetBit(0);
 		while (i >= 0) {
-			int key = i / CONTAINER_CAPACITY; // in which container i belongs
+			int key = i / containerCapacity; // in which container i belongs
 			Container container = getContainer(key);
 			if (container != null) {
-				container = container.and(bitSet.get(key * CONTAINER_CAPACITY, (key + 1) * CONTAINER_CAPACITY));
+				container = container.and(bitSet.get(key * containerCapacity, (key + 1) * containerCapacity));
 				newBitmap.addContainer(key, container);
 			}
 			if (i == Integer.MAX_VALUE) {
@@ -215,7 +221,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 			}
 			i = bitSet.nextSetBit(i + 1);
 			if (i >= 0) {
-				i = Integer.max(i, (key + 1) * CONTAINER_CAPACITY);
+				i = Integer.max(i, (key + 1) * containerCapacity);
 			}
 		}
 		containers = newBitmap.getContainers();
@@ -248,7 +254,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		for (int i = 0; i < size; i++) {
 			Container container = containers[i];
 			for (int index : container) {
-				bitSet.set(container.getKey() * CONTAINER_CAPACITY + index);
+				bitSet.set(container.getKey() * containerCapacity + index);
 			}
 		}
 		return bitSet;
@@ -271,7 +277,7 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		if (size >= containers.length) { // if size is not enough
 			int newCapacity = containers.length < 2048 ? containers.length * 2
 					: (int) (containers.length < 16384 ? containers.length * 1.5
-							: Integer.min((int) (containers.length * 1.2), CONTAINER_CAPACITY));
+							: Integer.min((int) (containers.length * 1.2), containerCapacity));
 			containers = Arrays.copyOf(containers, newCapacity);
 		}
 		containers[size] = container;

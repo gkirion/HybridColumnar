@@ -16,7 +16,7 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 
 	private List<DeltaContainer> deltaContainers;
 	private DeltaContainer currentContainer;
-	private final int MAX_CONTAINER_SIZE = 1000;
+	private int maxContainerSize;
 	private String name;
 	private Integer id;
 	private int last;
@@ -24,15 +24,24 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	public ColumnDelta() {
 		this("");
 	}
-
+	
 	public ColumnDelta(String name) {
+		this(name, 1000);
+	}
+	
+	public ColumnDelta(int maxContainerSize) {
+		this("", maxContainerSize);
+	}
+	
+	public ColumnDelta(String name, int maxContainerSize) {
 		deltaContainers = new ArrayList<>();
 		currentContainer = null;
 		this.name = name;
+		this.maxContainerSize = maxContainerSize;
 		id = 0;
 		last = -1;
 	}
-
+	
 	@Override
 	public void setName(String name) {
 		this.name = name;
@@ -48,11 +57,11 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 		if (id == 0) {
 			last = item;
 		}
-		if (currentContainer == null || currentContainer.size() >= MAX_CONTAINER_SIZE || item < last) {
+		if (currentContainer == null || currentContainer.size() >= maxContainerSize || item < last) {
 			if (currentContainer != null) {
 				currentContainer.flush();
 			}
-			currentContainer = new DeltaContainer(MAX_CONTAINER_SIZE);
+			currentContainer = new DeltaContainer(maxContainerSize);
 			deltaContainers.add(currentContainer);
 		}
 		currentContainer.add(item);
@@ -272,7 +281,7 @@ public class ColumnDelta implements Column<Integer>, Serializable {
 	public long sizeEstimation() {
 		long size = 0;
 		for (DeltaContainer deltaContainer : deltaContainers) {
-			size += deltaContainer.sizeEstimation() * 4;
+			size += deltaContainer.sizeEstimation();
 		}
 		return size;
 	}

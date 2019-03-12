@@ -25,14 +25,17 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		id = 0;
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void add(E item) {
 		if (!mappings.containsKey(item)) {
 			mappings.put(item, new BitSet());
@@ -41,6 +44,7 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		id++;
 	}
 
+	@Override
 	public Tuple2<E, Integer> get(int i) {
 		for (E item : mappings.keySet()) {
 			if (mappings.get(item).get(i)) {
@@ -64,6 +68,7 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		return newColumn;
 	}
 
+	@Override
 	public BitSet select(Predicate<E> predicate) {
 		BitSet bSet = new BitSet();
 		for (E value : mappings.keySet()) {
@@ -180,6 +185,7 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		return sum;
 	}
 
+	@Override
 	public Integer count(int start, int end) {
 		return (end < id ? end : id) - start;
 	}
@@ -189,6 +195,7 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		return avg(0, id);
 	}
 
+	@Override
 	public Double avg(int start, int end) {
 		return sum(start, end) / (double) count(start, end);
 	}
@@ -226,7 +233,7 @@ public class ColumnBitmap<E extends Comparable> implements Column<E>, Serializab
 		long size = 0;
 		for (E key : mappings.keySet()) {
 			BitSet bitSet = mappings.get(key);
-			size += bitSet.cardinality();
+			size += (8 + bitSet.cardinality() / 8);
 		}
 		return size;
 	}
