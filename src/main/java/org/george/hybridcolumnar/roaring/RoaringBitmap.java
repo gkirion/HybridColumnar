@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Iterator;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
+
 public class RoaringBitmap implements Iterable<Container>, Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -249,8 +251,8 @@ public class RoaringBitmap implements Iterable<Container>, Serializable {
 		size = newBitmap.getSize();
 	}
 
-	public BitSet convertToBitSet() {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended convertToBitSet() {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < size; i++) {
 			Container container = containers[i];
 			for (int index : container) {

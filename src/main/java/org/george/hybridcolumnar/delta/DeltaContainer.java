@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.george.hybridcolumnar.bitpacking.BitPacking;
+import org.george.hybridcolumnar.domain.ContainerClosedException;
 
 @SuppressWarnings("serial")
 public class DeltaContainer implements Iterable<Integer>, Serializable {
@@ -35,23 +36,31 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 		size = 0;
 	}
 	
-	public void add(int item) {
+	public void add(int item) throws ContainerClosedException {
 		buffer.add(item);
+		int numberOfBitsBefore = previous == null ? 0 : Integer.SIZE - Integer.numberOfLeadingZeros((maxDelta - minDelta));
 		if (previous == null) {
 			first = item;
 			minDelta = 0;
 			maxDelta = 0;
 		}
 		else {
-			if (item - previous < minDelta) {
+			if (minDelta == null || item - previous < minDelta) {
 				minDelta = item - previous;
 			}
-			if (item - previous > maxDelta) {
+			if (maxDelta == null || item - previous > maxDelta) {
 				maxDelta = item - previous;
 			}
 		}
-		previous = item;
 		size++;
+		previous = item;
+		int numberOfBitsAfter = Integer.SIZE - Integer.numberOfLeadingZeros((maxDelta - minDelta));
+		int extraBytes = ((numberOfBitsAfter - numberOfBitsBefore) * size) / 8;
+		int bytesEmptyContainer = 92;
+		if (size >= maxBufferSize || extraBytes > bytesEmptyContainer) {
+			flush();
+			throw new ContainerClosedException("Delta Container Closed");
+		}
 	}
 	
 	public void flush() {
@@ -61,10 +70,10 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 		previous = null;
 		for (Integer element : buffer) {
 			if (previous == null) {
-				bitPacking.add(0);
+				bitPacking.add(0 - minDelta);
 			}
 			else {
-				bitPacking.add(element - previous);
+				bitPacking.add(element - previous - minDelta);
 			}
 			previous = element;
 		}
@@ -78,7 +87,7 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 		else {
 			int value = first;
 			for (int j = 0; j <= i; j++) {
-				value += bitPacking.get(j);
+				value += (bitPacking.get(j) + minDelta);
 			}
 			return value;
 		}
@@ -90,9 +99,9 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 	
 	public long sizeEstimation() {
 		if (bitPacking == null) {
-			return 16 + size() * 4;
+			return 92 + size() * 16;
 		}
-		return 16 + bitPacking.sizeEstimation();
+		return 92 + bitPacking.sizeEstimation();
 	}
 
 	@Override
@@ -121,7 +130,7 @@ public class DeltaContainer implements Iterable<Integer>, Serializable {
 				value = buffer.get(i);
 			}
 			else {
-				value += bitPacking.get(i);
+				value += (bitPacking.get(i) + minDelta);
 			}
 			i++;
 			return value;

@@ -3,25 +3,24 @@ package org.george.hybridcolumnar.util;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
-import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
+import org.george.hybridcolumnar.chunk.Chunk;
 import org.george.hybridcolumnar.column.Column;
 import org.george.hybridcolumnar.column.ColumnFactory;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.RowArray;
 import org.george.hybridcolumnar.domain.Tuple2;
-import org.george.hybridcolumnar.model.Model;
 
 public class ChunkDriver {
 
 	@SuppressWarnings("unchecked")
-	public static void main(String[] args) throws IOException, ParseException, InvalidKerasConfigurationException, UnsupportedKerasConfigurationException {
+	public static void main(String[] args) throws IOException, ParseException {
 		/*
 		 * Tuple2<Integer, String> tuple2 = new Tuple2<Integer, String>(29, "george");
 		 * System.out.println(tuple2.getFirst());
@@ -600,9 +599,12 @@ public class ChunkDriver {
 		System.out.println(rowAnalyzer.analyze());
 		list3.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
 		System.out.println(list3);
+		*/
 		// load data
+/*		Comparable date = new Date();
+		System.out.println(date instanceof Integer);
 		FileReader file = new FileReader(
-				"C:\\Users\\george\\Downloads\\nyc-parking-tickets\\Parking_Violations_Issued_-_Fiscal_Year_2017.csv");
+				"D:\\george backup\\Downloads\\nyc-parking-tickets\\Parking_Violations_Issued_-_Fiscal_Year_2017.csv");
 		BufferedReader bufferedReader = new BufferedReader(file);
 
 		// get headers
@@ -621,7 +623,6 @@ public class ChunkDriver {
 		System.out.println("loading data into rows");
 		long start = System.currentTimeMillis();
 		int index = 0;
-		int chunkSize = 1000;
 		int lines = 0;
 		List<Row> ticketList = new ArrayList<>();
 		List<Chunk> chunkList = new ArrayList<>();
@@ -641,35 +642,110 @@ public class ChunkDriver {
 			} catch (Exception e) {
 				System.out.println(index);
 			}
-			index++;
-			if (index >= chunkSize) {
-				// analyze list by cardinality
-				RowAnalyzer analyzer = new RowAnalyzer(ticketList);
-				// sort list by cardinality
-				ticketList.sort(new RowComparator(analyzer.getOrderList(analyzer.analyze())));
-				Chunk ticketChunk = new Chunk();
-				ticketChunk.addColumn("Registration State", new ColumnRle<>());
-				ticketChunk.addColumn("Plate Type", new ColumnRle<>());
-				ticketChunk.addColumn("Issue Date", new ColumnRle<>());
-				ticketChunk.addColumn("Vehicle Body Type", new ColumnRle<>());
-				ticketChunk.addColumn("Vehicle Make", new ColumnRle<>());
-				ticketChunk.addColumn("Violation Time", new ColumnRle<>());
-				ticketChunk.addColumn("Plate ID", new ColumnPlain<>());
-				// load data into chunk
-				for (Row t : ticketList) {
-					ticketChunk.add(t);
-				}
-				ticketList.clear();
-				chunkList.add(ticketChunk);
-				index = 0;
-			}
 			if (lines > 1000000)
 				break;
 			lines++;
 			line = bufferedReader.readLine();
-
 		}
+		System.out.println("inserted " + lines + " rows");
 		bufferedReader.close();
+
+		// analyze list by cardinality
+		RowAnalyzer analyzer = new RowAnalyzer(ticketList);
+		// sort list by cardinality
+		ticketList.sort(new RowComparator(analyzer.getOrderList(analyzer.analyze())));
+		Chunk ticketChunk = new Chunk();
+		HashMap<String, ColumnType> colsBestEncodings = Model.findBestEncoding(ticketList);
+		for (String name : colsBestEncodings.keySet()) {
+			ticketChunk.addColumn(name, ColumnFactory.createColumn(colsBestEncodings.get(name)));
+		}*/
+		
+/*		ticketChunk.addColumn("Registration State", ColumnFactory.createColumn(colsBestEncodings.get(0)));
+		ticketChunk.addColumn("Plate Type", ColumnFactory.createColumn(colsBestEncodings.get(1)));
+		ticketChunk.addColumn("Plate ID", ColumnFactory.createColumn(colsBestEncodings.get(2)));
+		ticketChunk.addColumn("Issue Date", ColumnFactory.createColumn(colsBestEncodings.get(3)));
+		ticketChunk.addColumn("Vehicle Body Type", ColumnFactory.createColumn(colsBestEncodings.get(4)));
+		ticketChunk.addColumn("Vehicle Make", ColumnFactory.createColumn(colsBestEncodings.get(5)));
+		ticketChunk.addColumn("Violation Time", ColumnFactory.createColumn(colsBestEncodings.get(6)));*/
+		// load data into chunk
+/*		Random r = new Random();
+		ticketChunk.addColumn("test", ColumnFactory.createColumn(ColumnType.ROARING));
+		for (Row row : ticketList) {
+			ticketChunk.add(row);
+			ticketChunk.getColumn("test").add(r.nextInt(10000));
+		}*/
+/*		for (RowArray t : ticketList) {
+			ticketChunk.getColumn("Registration State").add(t.get(0));
+			ticketChunk.getColumn("Plate Type").add(t.get(1));
+			ticketChunk.getColumn("Plate ID").add(t.get(2));
+			ticketChunk.getColumn("Issue Date").add(t.get(3));
+			ticketChunk.getColumn("Vehicle Body Type").add(t.get(4));
+			ticketChunk.getColumn("Vehicle Make").add(t.get(5));
+			ticketChunk.getColumn("Violation Time").add(t.get(6));
+		}*/
+/*		long end = System.currentTimeMillis();
+		System.out.println("processing time: " + (end - start) / 1000.0 + " s");
+		//ticketList.clear();
+		System.out.println("type: " + ticketChunk.getColumn("Registration State").type() + " size: " + ticketChunk.getColumn("Registration State").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Plate Type").type() + " size: " + ticketChunk.getColumn("Plate Type").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Plate ID").type() + " size: " + ticketChunk.getColumn("Plate ID").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Issue Date").type() + " size: " + ticketChunk.getColumn("Issue Date").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Vehicle Body Type").type() + " size: " + ticketChunk.getColumn("Vehicle Body Type").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Vehicle Make").type() + " size: " + ticketChunk.getColumn("Vehicle Make").sizeEstimation());
+		System.out.println("type: " + ticketChunk.getColumn("Violation Time").type() + " size: " + ticketChunk.getColumn("Violation Time").sizeEstimation());
+		start = System.currentTimeMillis();
+		ticketChunk.getColumn("test").sum();
+
+		System.out.println("tickets issued on 27/03/2017: " + ticketChunk.getColumn("Issue Date").selectEquals(df.parse("27/03/2017")).cardinality());
+		System.out.println("tickets issued with car make Toyota: " + ticketChunk.getColumn("Vehicle Make").selectEquals("TOYOT").cardinality());
+		System.out.println("tickets issued with car make VW: " + ticketChunk.getColumn("Vehicle Make").selectEquals("VW").cardinality());
+		System.out.println("tickets issued with car type SUBN: " + ticketChunk.getColumn("Vehicle Body Type").selectEquals("SUBN").cardinality());
+		System.out.println("tickets issued with car make Toyota on 27/03/2017: " + ticketChunk.getColumn("Vehicle Make").selectEquals("TOYOT").and(ticketChunk.getColumn("Issue Date").selectEquals(df.parse("27/03/2017"))).cardinality());
+		System.out.println("tickets issued with car make VW on 27/03/2017: " + ticketChunk.getColumn("Vehicle Make").selectEquals("VW").and(ticketChunk.getColumn("Issue Date").selectEquals(df.parse("27/03/2017"))).cardinality());
+		end = System.currentTimeMillis();
+		System.out.println("processing time: " + (end - start) / 1000.0 + " s");
+		int i = 0;
+		start = System.currentTimeMillis();
+		Chunk smallChunk = new Chunk();
+		smallChunk.addColumn("Registration State", ticketChunk.getColumn("Registration State"));
+		smallChunk.addColumn("Plate Type", ticketChunk.getColumn("Plate Type"));
+		smallChunk.addColumn("Plate ID", ticketChunk.getColumn("Plate ID"));
+		smallChunk.addColumn("Vehicle Make", ticketChunk.getColumn("Vehicle Make"));
+		for (Row row : smallChunk) {
+			i++;
+		}
+		end = System.currentTimeMillis();
+		System.out.println(i);
+		System.out.println("processing time: " + (end - start) / 1000.0 + " s");
+		System.out.println(ticketChunk.getColumn("Vehicle Make").cardinality());
+		for (ColumnType columnType : ColumnType.values()) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN) {
+				continue;
+			}
+			
+			Column<Comparable> column = ColumnFactory.createColumn(columnType);
+			for (Row row  : ticketList) {
+				column.add(row.get("test"));
+			}
+			System.out.println(ticketList.size());
+			System.out.println(column.length());
+			System.out.println("column type: " + columnType);
+			start = System.currentTimeMillis();
+			column.sum();
+			end = System.currentTimeMillis();
+			System.out.println("aggregate test: " + (end - start) + " ms");
+			start = System.currentTimeMillis();
+			column.selectEquals("BMW");
+			end = System.currentTimeMillis();
+			System.out.println("select test: " + (end - start) + " ms");
+			start = System.currentTimeMillis();
+			for (Tuple2<Comparable, Integer> t : column) {
+				
+			}
+			end = System.currentTimeMillis();
+			System.out.println("iterate test: " + (end - start) + " ms");
+		}*/
+/*
 		long end = System.currentTimeMillis();
 		System.out.println("time: " + (end - start) + " ms");
 		// System.out.println(ticketList);
@@ -793,8 +869,7 @@ public class ChunkDriver {
 
 		// System.out.println(ticketList);
 		
-		List<Integer> intList = new ArrayList<>();
-		Random r = new Random();
+
 		/*
 		for (int i = 0; i < 10000010; i++) {
 			intList.add(r.nextInt(10));
@@ -825,7 +900,35 @@ public class ChunkDriver {
 		System.out.println(plain.sizeEstimation());
 		System.out.println(delta.sizeEstimation());
 		*/
-		String[] names = {"jo", "jack", "george", "giagkos", "nick", "fotini", "jill", "jane", "maria", "niki" ,"platon"};
+/*		String[] names = {"jo", "jack", "george", "giagkos", "nick", "fotini", "jill", "jane", "maria", "niki" ,"platon"};
+		ArrayList<Row> rlist = new ArrayList<>();
+		for (i = 0; i < 1000000; i++) {
+			Row row = new Row();
+			row.add("name", names[r.nextInt(names.length)]);
+			row.add("age", r.nextInt(100));
+			row.add("height", r.nextInt(220));
+			rlist.add(row);
+		}
+		RowAnalyzer rowAnalyzer = new RowAnalyzer(rlist);
+		rlist.sort(new RowComparator(rowAnalyzer.getOrderList(rowAnalyzer.analyze())));
+		Chunk nc = new Chunk();
+		HashMap<String, ColumnType> types = Model.findBestEncoding(rlist);
+		for (String name : types.keySet()) {
+			nc.addColumn(name, ColumnFactory.createColumn(types.get(name)));
+		}
+		for (Row row : rlist) {
+			nc.add(row);
+		}
+		Double ages = 0.0;
+		Double heights = 0.0;
+		for (Row row : nc) {
+			ages += (Integer)row.get("age");
+			heights += (Integer)row.get("height");
+		}
+		System.out.println("age sum test: " + ages.equals(nc.getColumn("age").sum()));
+		System.out.println("height sum test: " + heights.equals(nc.getColumn("height").sum()));*/
+
+		
 /*		Integer[] cardinalities = {50, 100, 500, 1800};
 		
 		for (Integer cardinality : cardinalities) {
@@ -860,23 +963,24 @@ public class ChunkDriver {
 				}
 				bufferedWriter.close();
 			}
-		}*/
+		}
 		List<Integer> test = new ArrayList<>();
 		List<Row> rowsFull = new ArrayList<>();
 		for (int rep = 1; rep <= 1; rep++) {
 			List<Row> rows = new ArrayList<>();
 			for (int i = 0; i < 1000000; i++) {
 				Row row = new Row();
+				row.add("id", r.nextInt(1806));
 				row.add("names", r.nextInt(names.length));
 				row.add("age", r.nextInt(100));
-				//row.add("t", r.nextInt(806));
-				//row.add("id", r.nextInt(1806));
+				row.add("t", r.nextInt(806));
 
 				rows.add(row);
 				test.add(r.nextInt(10000));
 			}
 			RowAnalyzer rowAnalyzer = new RowAnalyzer(rows);
 			List<String> orderList = rowAnalyzer.getOrderList(rowAnalyzer.analyze());
+			System.out.println(rowAnalyzer.getOrderList(rowAnalyzer.analyze()));
 			long start = System.currentTimeMillis();
 			rows.sort(new RowComparator(orderList));
 			long end = System.currentTimeMillis();
@@ -890,9 +994,9 @@ public class ChunkDriver {
 			}
 		}
 
-		
+		/*
 		Model model = new Model();
-		model.loadModel("column-model-full7.hdf5");
+		//model.loadModel("column-model-full7.hdf5");
 		int i = 0, correct = 0;
 		List<List<Row>> packs = Model.splitIntoPacks(rowsFull, 1000);
 		long start = System.currentTimeMillis();
@@ -951,10 +1055,10 @@ public class ChunkDriver {
 				//end = System.currentTimeMillis();
 				//System.out.println("best encoding time: " + (end - start));
 
-				/*System.out.println("prediction: " + predictions.get(i) + ", actual: " + columnType);
+				System.out.println("prediction: " + predictions.get(i) + ", actual: " + columnType);
 				if (predictions.get(i) == columnType) {
 					correct++;
-				}*/
+				}
 				i++;
 			}
 		}
@@ -964,6 +1068,131 @@ public class ChunkDriver {
 		System.out.println("total size: " + totalSize);
 
 		System.out.println("accuracy:" + (correct / (double)i));
+		HashMap<String, String> map = new HashMap<>();
+		map.put("age", "18");
+		map.put("name", "george");
+		System.out.println(map.keySet());
+		for (String key : map.keySet()) {
+			System.out.println(key);
+		} */
+		
+		
+		Random r = new Random();
+		ArrayList<Row> rows = new ArrayList<>();
+		for (int i = 0; i < 1000000; i++) {
+			Row row = new Row();
+			row.add("1", r.nextInt(100));
+			row.add("2", r.nextInt(1000));
+			row.add("3", r.nextInt(3000));
+			rows.add(row);
+		}
+		
+		rows.sort(new RowComparator(RowAnalyzer.analyze(rows)));
+		
+		for (ColumnType columnType : ColumnType.values()) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.RLE_DICTIONARY && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN && columnType != ColumnType.BIT_PACKING && columnType != ColumnType.BIT_PACKING_DICTIONARY) {
+				continue;
+			}
+			Column<Comparable> col1 = ColumnFactory.createColumn(columnType);
+			Column<Comparable> col2 = ColumnFactory.createColumn(columnType);
+			Column<Comparable> col3 = ColumnFactory.createColumn(columnType);
+			Chunk chunk = new Chunk();
+			chunk.addColumn("1", col1);
+			chunk.addColumn("2", col2);
+			chunk.addColumn("3", col3);
+			for (Row row : rows) {
+				chunk.add(row);
+			}
+			
+			Double sum1 = 0.0, sum2 = 0.0, sum3 = 0.0;
+			for (Row row : rows) {
+				sum1 += (Integer)row.get("1");
+				sum2 += (Integer)row.get("2");
+				sum3 += (Integer)row.get("3");
+			}
+			long start, end;
+			System.out.println("column type: " + columnType);
+			start = System.currentTimeMillis();
+			System.out.println("col 1 sum test(pass): " + col1.sum().equals(sum1));
+			end = System.currentTimeMillis();
+			System.out.println("col 1 sum time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 2 sum test(pass): " + col2.sum().equals(sum2));
+			end = System.currentTimeMillis();
+			System.out.println("col 2 sum time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 3 sum test(pass): " + col3.sum().equals(sum3));
+			end = System.currentTimeMillis();
+			System.out.println("col 3 sum time: " + (end - start) / 1000.0 + " s");
+			
+			BitSet bit1 = new BitSet(), bit2 = new BitSet(), bit3 = new BitSet();
+			int i = 0;
+			for (Row row : rows) {
+				if (row.get("1").compareTo(50) <= 0) {
+					bit1.set(i);
+				}
+				if (row.get("2").compareTo(50) <= 0) {
+					bit2.set(i);
+				}				
+				if (row.get("3").compareTo(50) <= 0) {
+					bit3.set(i);
+				}
+				i++;
+			}
+			start = System.currentTimeMillis();
+			System.out.println("col 1 select test(pass): " + col1.selectLessThanOrEquals(50).equals(bit1));
+			end = System.currentTimeMillis();
+			System.out.println("col 1 select time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 2 select test(pass): " + col2.selectLessThanOrEquals(50).equals(bit2));
+			end = System.currentTimeMillis();
+			System.out.println("col 2 select time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 3 select test(pass): " + col3.selectLessThanOrEquals(50).equals(bit3));
+			end = System.currentTimeMillis();
+			System.out.println("col 3 select time: " + (end - start) / 1000.0 + " s");
+			
+			sum1 = 0.0; sum2 = 0.0; sum3 = 0.0;
+			i = 0;
+			for (Row row : rows) {
+				if (bit1.get(i)) {
+					sum1 += (Integer)row.get("1");
+				}
+				if (bit2.get(i)) {
+					sum2 += (Integer)row.get("2");
+				}
+				if (bit3.get(i)) {
+					sum3 += (Integer)row.get("3");
+				}
+				i++;
+			}
+			start = System.currentTimeMillis();
+			System.out.println("col 1 select and sum test(pass): " + col1.sum(col1.selectLessThanOrEquals(50)).equals(sum1));
+			end = System.currentTimeMillis();
+			System.out.println("col 1 select and sum time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 2 select and sum test(pass): " + col2.sum(col2.selectLessThanOrEquals(50)).equals(sum2));
+			end = System.currentTimeMillis();
+			System.out.println("col 2 select and sum time: " + (end - start) / 1000.0 + " s");
+			start = System.currentTimeMillis();
+			System.out.println("col 3 select and sum test(pass): " + col3.sum(col3.selectLessThanOrEquals(50)).equals(sum3));
+			end = System.currentTimeMillis();
+			System.out.println("col 3 select and sum time: " + (end - start) / 1000.0 + " s");
+			
+			i = 0;
+			boolean equal = true;
+			start = System.currentTimeMillis();
+			for (Row row : chunk) {
+				if (!row.get("1").equals(rows.get(i).get("1")) || !row.get("2").equals(rows.get(i).get("2")) || !row.get("3").equals(rows.get(i).get("3"))) {
+					equal = false;
+				}
+				i += row.getRunLength();
+			}
+			System.out.println("iterate test(pass): " + equal); 
+			end = System.currentTimeMillis();
+			System.out.println("iterate time: " + (end - start) / 1000.0 + " s");//love
+		}
+		
 	}
 
 	public static class RowComparator implements Comparator<Row> {
@@ -1022,13 +1251,8 @@ public class ChunkDriver {
 
 	public static class RowAnalyzer {
 
-		private List<Row> rows;
 
-		public RowAnalyzer(List<Row> rows) {
-			this.rows = rows;
-		}
-
-		public ArrayList<Tuple2<String, Integer>> analyze() {
+		public static List<String> analyze(List<Row> rows) {
 			HashMap<String, HashMap<Comparable<?>, Boolean>> uniqueElements = new HashMap<>();
 			for (Row row : rows) {
 				for (String key : row) {
@@ -1050,7 +1274,11 @@ public class ChunkDriver {
 				}
 
 			});
-			return cardinalities;
+			List<String> orderList = new ArrayList<>();
+			for (Tuple2<String, Integer> tuple : cardinalities) {
+				orderList.add(tuple.getFirst());
+			}
+			return orderList;
 
 		}
 		

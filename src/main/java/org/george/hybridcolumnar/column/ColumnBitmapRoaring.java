@@ -1,16 +1,17 @@
 package org.george.hybridcolumnar.column;
 
 import java.io.Serializable;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.roaring.Container;
 import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Serializable {
 
 	private HashMap<E, RoaringBitmap> mappings;
@@ -81,7 +82,7 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public BitSet select(Predicate<E> predicate) {
+	public BitSetExtended select(Predicate<E> predicate) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (predicate.test(value)) {
@@ -92,27 +93,28 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public BitSet selectEquals(E item) {
+	public BitSetExtended selectEquals(E item) {
 		for (E value : mappings.keySet()) {
 			if (value.equals(item)) {
 				return mappings.get(value).convertToBitSet();
 				// return mappings.get(value);
 			}
 		}
-		return new BitSet();
+		return new BitSetExtended();
 	}
 
 	@Override
-	public BitSet selectNotEquals(E item) {
-		BitSet bitSet = selectEquals(item);
-		BitSet bSet = new BitSet();
+	public BitSetExtended selectNotEquals(E item) {
+		BitSetExtended bitSet = selectEquals(item);
+		BitSetExtended bSet = new BitSetExtended();
 		bSet.set(0, id); // set all to 1
 		bSet.andNot(bitSet);
 		return bSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThan(E item) {
+	public BitSetExtended selectLessThan(E item) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (value.compareTo(item) < 0) {
@@ -122,8 +124,9 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		return bitmap.convertToBitSet();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThanOrEquals(E item) {
+	public BitSetExtended selectLessThanOrEquals(E item) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (value.compareTo(item) <= 0) {
@@ -133,8 +136,9 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		return bitmap.convertToBitSet();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThan(E item) {
+	public BitSetExtended selectMoreThan(E item) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (value.compareTo(item) > 0) {
@@ -144,8 +148,9 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		return bitmap.convertToBitSet();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThanOrEquals(E item) {
+	public BitSetExtended selectMoreThanOrEquals(E item) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (value.compareTo(item) >= 0) {
@@ -155,8 +160,9 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		return bitmap.convertToBitSet();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectBetween(E from, E to) {
+	public BitSetExtended selectBetween(E from, E to) {
 		RoaringBitmap bitmap = new RoaringBitmap();
 		for (E value : mappings.keySet()) {
 			if (value.compareTo(from) >= 0 && value.compareTo(to) <= 0) {
@@ -185,15 +191,24 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public Double sum(BitSet bitSet) {
+	public Double sum(BitSetExtended bitSet) {
 		Double sum = 0.0;
 		RoaringBitmap bitmap = new RoaringBitmap();
 		Set<E> values = mappings.keySet();
 		for (E value : values) {
-			bitmap.or(mappings.get(value));
+/*			bitmap.or(mappings.get(value));
 			bitmap.and(bitSet);
 			sum += ((Number) value).doubleValue() * bitmap.cardinality();
-			bitmap.clear();
+			bitmap.clear();*/
+			int i = 0;
+			for (Container container : mappings.get(value)) {
+				i = container.getKey() * containerCapacity;
+				for (Integer index : container) {
+					if (bitSet.get(i + index)) {
+						sum += ((Number) value).doubleValue();
+					}
+				}
+			}
 		}
 		return sum;
 	}
@@ -214,7 +229,7 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public Double avg(BitSet bitSet) {
+	public Double avg(BitSetExtended bitSet) {
 		Long sum = new Long(0);
 		RoaringBitmap bitmap = new RoaringBitmap();
 		Set<E> values = mappings.keySet();
@@ -225,6 +240,23 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 			bitmap.clear();
 		}
 		return sum / (double) bitSet.cardinality();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Column<E> convertToPlain() {
+		ColumnPlain<E> colPlain = new ColumnPlain<>(length());
+		for (E value : mappings.keySet()) {
+			RoaringBitmap bitmap = mappings.get(value);
+			int i = 0;
+			for (Container container : bitmap) {
+				i = container.getKey() * containerCapacity;
+				for (Integer index : container) {
+					colPlain.add(value, i + index);
+				}
+			}
+		}
+		return colPlain;
 	}
 
 	@Override
@@ -247,7 +279,12 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 		long size = 0;
 		for (E key : mappings.keySet()) {
 			RoaringBitmap roaringBitmap = mappings.get(key);
-			size += 8;
+			if (key instanceof String) {
+				size += (42 + ((String)key).length() * 2);
+			}
+			else {
+				size += 32;
+			}
 			for (Container container : roaringBitmap) {
 				size += container.getSize();
 			}
@@ -284,13 +321,13 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public Column<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSetExtended bitSet) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Double sum(int start, int end, BitSet bitSet) {
+	public Double sum(int start, int end, BitSetExtended bitSet) {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "rawtypes" })
 public class RowArray implements Comparable<RowArray>, Iterable<Comparable>, Serializable {
 
 	private List<Comparable> tuple;
@@ -18,22 +18,18 @@ public class RowArray implements Comparable<RowArray>, Iterable<Comparable>, Ser
 		runLength = 0;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public void add(Comparable data) {
 		tuple.add(data);
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Comparable get(int index) {
 		return tuple.get(index);
 	}
 
-	@SuppressWarnings("rawtypes")
 	public List<Comparable> getTuple() {
 		return tuple;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public void setTuple(List<Comparable> tuple) {
 		this.tuple = tuple;
 	}
@@ -89,7 +85,7 @@ public class RowArray implements Comparable<RowArray>, Iterable<Comparable>, Ser
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked" })
 	public int compareTo(RowArray o) {
 		List<Comparable> otherTuple = o.getTuple();
 		for (int i = 0; i < tuple.size(); i++) {
@@ -102,13 +98,11 @@ public class RowArray implements Comparable<RowArray>, Iterable<Comparable>, Ser
 		return 0;
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public Iterator<Comparable> iterator() {
 		return new RowArrayIterator();
 	}
 	
-	@SuppressWarnings({ "rawtypes" })
 	private class RowArrayIterator implements Iterator<Comparable> {
 		
 		private Iterator<Comparable> iterator = tuple.iterator();

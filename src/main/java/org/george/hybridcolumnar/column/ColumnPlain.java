@@ -2,17 +2,16 @@ package org.george.hybridcolumnar.column;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
 import org.george.hybridcolumnar.domain.Tuple2;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ColumnPlain<E extends Comparable> implements Column<E>, Serializable {
 
-	private ColumnType columnType;
-	private E type;
 	private ArrayList<E> arrayList;
 	private String name;
 	private Integer id;
@@ -22,25 +21,41 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	public ColumnPlain(String name) {
-		columnType = ColumnType.PLAIN;
 		arrayList = new ArrayList<>();
 		this.name = name;
 		id = 0;
 	}
+	
+	public ColumnPlain(int size) {
+		arrayList = new ArrayList<>();
+		for (int i = 0; i < size; i++) {
+			arrayList.add(null);
+		}
+		id = 0;
+	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void add(E item) {
 		arrayList.add(item);
 		id++;
 	}
+	
+	public void add(E item, int position) {
+		arrayList.set(position, item);
+		id++;
+	}
 
+	@Override
 	public Tuple2<E, Integer> get(int i) {
 		return new Tuple2<E, Integer>(arrayList.get(i), 1);
 	}
@@ -49,6 +64,7 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return arrayList;
 	}
 
+	@Override
 	public String toString() {
 		return arrayList.toString();
 	}
@@ -63,8 +79,9 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return newColumn;
 	}
 
-	public BitSet select(Predicate<E> predicate) {
-		BitSet bitSet = new BitSet();
+	@Override
+	public BitSetExtended select(Predicate<E> predicate) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (predicate.test(arrayList.get(i))) {
 				bitSet.set(i);
@@ -74,8 +91,8 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public BitSet selectEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).equals(item)) {
 				bitSet.set(i);
@@ -85,17 +102,18 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public BitSet selectNotEquals(E item) {
-		BitSet bitSet = selectEquals(item);
-		BitSet bSet = new BitSet();
+	public BitSetExtended selectNotEquals(E item) {
+		BitSetExtended bitSet = selectEquals(item);
+		BitSetExtended bSet = new BitSetExtended();
 		bSet.set(0, id); // set all to 1
 		bSet.andNot(bitSet);
 		return bSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).compareTo(item) < 0) {
 				bitSet.set(i);
@@ -104,9 +122,10 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).compareTo(item) <= 0) {
 				bitSet.set(i);
@@ -115,9 +134,10 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).compareTo(item) > 0) {
 				bitSet.set(i);
@@ -126,9 +146,10 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).compareTo(item) >= 0) {
 				bitSet.set(i);
@@ -137,9 +158,10 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectBetween(E from, E to) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectBetween(E from, E to) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (arrayList.get(i).compareTo(from) >= 0 && arrayList.get(i).compareTo(to) <= 0) {
 				bitSet.set(i);
@@ -149,7 +171,7 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public Column<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSetExtended bitSet) {
 		Column<E> column = new ColumnPlain<>();
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
@@ -182,7 +204,7 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public Double sum(BitSet bitSet) {
+	public Double sum(BitSetExtended bitSet) {
 		Double sum = 0.0;
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
@@ -193,7 +215,7 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public Double sum(int start, int end, BitSet bitSet) {
+	public Double sum(int start, int end, BitSetExtended bitSet) {
 		Double sum = 0.0;
 		for (int i = start; i < end; i++) {
 			if (bitSet.get(i)) {
@@ -219,7 +241,7 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 	}
 
 	@Override
-	public Double avg(BitSet bitSet) {
+	public Double avg(BitSetExtended bitSet) {
 		Long sum = new Long(0);
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
@@ -250,7 +272,16 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 
 	@Override
 	public long sizeEstimation() {
-		return arrayList.size() * 4;
+		long size = 0;
+		for (E item : arrayList) {
+			if (item instanceof String) {
+				size += (24 + ((String)item).length() * 2);
+			}
+			else {
+				size += 16;
+			}
+		}
+		return size;
 	}
 
 	@Override
@@ -279,6 +310,12 @@ public class ColumnPlain<E extends Comparable> implements Column<E>, Serializabl
 			return new Tuple2<E, Integer>(value, 1);
 		}
 
+	}
+
+	@Override
+	public Column<E> convertToPlain() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

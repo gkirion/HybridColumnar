@@ -2,18 +2,20 @@ package org.george.hybridcolumnar.column;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
+import org.george.hybridcolumnar.domain.RleIntTriple;
+import org.george.hybridcolumnar.domain.RleTriple;
 import org.george.hybridcolumnar.domain.Tuple2;
-import org.george.hybridcolumnar.domain.Tuple3;
 import org.george.hybridcolumnar.util.Dictionary;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Serializable {
 
-	private ArrayList<Tuple3<Integer, Integer, Integer>> arrayList;
+	private ArrayList<RleTriple<Integer>> arrayList;
 	private Dictionary<E> dictionary;
 	private String name;
 	private Integer id;
@@ -36,31 +38,35 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 		id = 0;
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void add(E item) {
 		int size = arrayList.size();
-		if (size > 0 && dictionary.get(arrayList.get(size - 1).getFirst()).equals(item)) {
-			arrayList.get(size - 1).setSecond(arrayList.get(size - 1).getSecond() + 1);
+		if (size > 0 && dictionary.get(arrayList.get(size - 1).getDatum()).equals(item)) {
+			arrayList.get(size - 1).setRunLength(arrayList.get(size - 1).getRunLength() + 1);
 		} else {
-			arrayList.add(new Tuple3<Integer, Integer, Integer>(dictionary.insert(item), 1, id));
+			arrayList.add(new RleIntTriple(dictionary.insert(item), 1, id));
 		}
 		id++;
 	}
 
+	@Override
 	public Tuple2<E, Integer> get(int i) {
 		int key = find(i, 0, arrayList.size() - 1);
 		if (key == -1) {
 			return null;
 		}
-		return new Tuple2<E, Integer>(dictionary.get(arrayList.get(key).getFirst()),
-				arrayList.get(key).getThird() + arrayList.get(key).getSecond() - i);
+		return new Tuple2<E, Integer>(dictionary.get(arrayList.get(key).getDatum()),
+				arrayList.get(key).getIndex() + arrayList.get(key).getRunLength() - i);
 	}
 
 	protected int find(int i, int left, int right) {
@@ -68,132 +74,139 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 			return -1;
 		}
 		int mid = (left + right) / 2;
-		if (arrayList.get(mid).getThird() > i) {
+		if (arrayList.get(mid).getIndex() > i) {
 			return find(i, left, mid - 1);
-		} else if (arrayList.get(mid).getSecond() + arrayList.get(mid).getThird() <= i) {
+		} else if (arrayList.get(mid).getRunLength() + arrayList.get(mid).getIndex() <= i) {
 			return find(i, mid + 1, right);
 		} else {
 			return mid;
 		}
 	}
 
+	@Override
 	public String toString() {
 		return arrayList.toString();
 	}
 
-	private void add(Tuple3<Integer, Integer, Integer> tuple) {
+	private void add(RleTriple<Integer> tuple) {
 		arrayList.add(tuple);
 	}
 
 	public Column<E> filter(Predicate<E> predicate) {
 		ColumnDictionaryRle<E> newColumn = new ColumnDictionaryRle<>(dictionary);
-		for (Tuple3<Integer, Integer, Integer> value : arrayList) { // for each value of column
-			if (predicate.test(dictionary.get(value.getFirst()))) { // if value matches predicate
+		for (RleTriple<Integer> value : arrayList) { // for each value of column
+			if (predicate.test(dictionary.get(value.getDatum()))) { // if value matches predicate
 				newColumn.add(value); // insert it into new column
 			}
 		}
 		return newColumn;
 	}
 
-	public BitSet select(Predicate<E> predicate) {
-		BitSet bitSet = new BitSet();
-		for (Tuple3<Integer, Integer, Integer> tuple : arrayList) {
-			if (predicate.test(dictionary.get(tuple.getFirst()))) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+	@Override
+	public BitSetExtended select(Predicate<E> predicate) {
+		BitSetExtended bitSet = new BitSetExtended();
+		for (RleTriple<Integer> tuple : arrayList) {
+			if (predicate.test(dictionary.get(tuple.getDatum()))) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
 	@Override
-	public BitSet selectEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).equals(item)) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).equals(item)) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
 	@Override
-	public BitSet selectNotEquals(E item) {
-		BitSet bitSet = selectEquals(item);
-		BitSet bSet = new BitSet();
+	public BitSetExtended selectNotEquals(E item) {
+		BitSetExtended bitSet = selectEquals(item);
+		BitSetExtended bSet = new BitSetExtended();
 		bSet.set(0, id); // set all to 1
 		bSet.andNot(bitSet);
 		return bSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).compareTo(item) < 0) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).compareTo(item) < 0) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).compareTo(item) <= 0) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).compareTo(item) <= 0) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).compareTo(item) > 0) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).compareTo(item) > 0) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).compareTo(item) >= 0) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).compareTo(item) >= 0) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectBetween(E from, E to) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectBetween(E from, E to) {
+		BitSetExtended bitSet = new BitSetExtended();
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			if (dictionary.get(tuple.getFirst()).compareTo(from) >= 0
-					&& dictionary.get(tuple.getFirst()).compareTo(to) <= 0) {
-				bitSet.set(tuple.getThird(), tuple.getThird() + tuple.getSecond());
+			if (dictionary.get(tuple.getDatum()).compareTo(from) >= 0
+					&& dictionary.get(tuple.getDatum()).compareTo(to) <= 0) {
+				bitSet.set(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength());
 			}
 		}
 		return bitSet;
@@ -208,27 +221,27 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 	public Double sum(int start, int end) {
 		Double sum = 0.0;
 		int i = start;
-		Tuple3<Integer, Integer, Integer> val;
+		RleTriple<Integer> val;
 		int index = find(start, 0, arrayList.size() - 1);
 		while (i < end) {
 			val = arrayList.get(index);
-			sum += ((Number) dictionary.get(val.getFirst())).doubleValue()
-					* (i + val.getSecond() <= end ? val.getSecond() : end - i);
-			i += val.getSecond();
+			sum += ((Number) dictionary.get(val.getDatum())).doubleValue()
+					* (i + val.getRunLength() <= end ? val.getRunLength() : end - i);
+			i += val.getRunLength();
 			index++;
 		}
 		return sum;
 	}
 
 	@Override
-	public Double sum(BitSet bitSet) {
+	public Double sum(BitSetExtended bitSet) {
 		Double sum = 0.0;
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			sum += ((Number) dictionary.get(tuple.getFirst())).doubleValue()
-					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+			sum += ((Number) dictionary.get(tuple.getDatum())).doubleValue()
+					* bitSet.get(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength()).cardinality();
 		}
 		return sum;
 	}
@@ -249,14 +262,14 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 	}
 
 	@Override
-	public Double avg(BitSet bitSet) {
+	public Double avg(BitSetExtended bitSet) {
 		Long sum = new Long(0);
 		int n = arrayList.size();
-		Tuple3<Integer, Integer, Integer> tuple;
+		RleTriple<Integer> tuple;
 		for (int i = 0; i < n; i++) {
 			tuple = arrayList.get(i);
-			sum += (Integer) dictionary.get(tuple.getFirst())
-					* bitSet.get(tuple.getThird(), tuple.getThird() + tuple.getSecond()).cardinality();
+			sum += (Integer) dictionary.get(tuple.getDatum())
+					* bitSet.get(tuple.getIndex(), tuple.getIndex() + tuple.getRunLength()).cardinality();
 		}
 		return sum / (double) bitSet.cardinality();
 	}
@@ -267,14 +280,14 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 			return 0;
 		}
 		int size = arrayList.size();
-		return arrayList.get(size - 1).getThird() + arrayList.get(size - 1).getSecond();
+		return arrayList.get(size - 1).getIndex() + arrayList.get(size - 1).getRunLength();
 	}
 
 	@Override
 	public int cardinality() {
 		HashMap<E, Boolean> distinctMap = new HashMap<>();
 		for (int i = 0; i < id; i++) {
-			distinctMap.put(dictionary.get(arrayList.get(i).getFirst()), true);
+			distinctMap.put(dictionary.get(arrayList.get(i).getDatum()), true);
 		}
 		return distinctMap.size();
 	}
@@ -286,25 +299,55 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 
 	@Override
 	public long sizeEstimation() {
-		return arrayList.size() * 12;
+		return dictionary.sizeEstimation() + arrayList.size() * 24;
+	}
+	
+	@Override
+	public Column<E> filter(BitSetExtended bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Double sum(int start, int end, BitSetExtended bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Column<E> convertToPlain() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public Iterator<Tuple2<E, Integer>> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return new ColumnRleIterator();
+	}
+	
+	private class ColumnRleIterator implements Iterator<Tuple2<E, Integer>> {
+		
+		private int i;
+		private RleTriple<Integer> value;
+		
+		public ColumnRleIterator() {
+			i = 0;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return i < arrayList.size();
+		}
+
+		@Override
+		public Tuple2<E, Integer> next() {
+			value = arrayList.get(i);
+			i++;
+			return new Tuple2<E, Integer>(dictionary.get(value.getDatum()), value.getRunLength());
+		}
+		
 	}
 
-	@Override
-	public Column<E> filter(BitSet bitSet) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public Double sum(int start, int end, BitSet bitSet) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

@@ -1,8 +1,8 @@
 package org.george.hybridcolumnar.column;
 
-import java.util.BitSet;
 import java.util.function.Predicate;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
 import org.george.hybridcolumnar.domain.Tuple2;
 
 @SuppressWarnings("rawtypes")
@@ -16,31 +16,31 @@ public interface Column<E extends Comparable> extends Iterable<Tuple2<E, Integer
 
 	Tuple2<E, Integer> get(int i);
 
-	BitSet select(Predicate<E> predicate);
+	BitSetExtended select(Predicate<E> predicate);
 
-	BitSet selectEquals(E item);
+	BitSetExtended selectEquals(E item);
 
-	BitSet selectNotEquals(E item);
+	BitSetExtended selectNotEquals(E item);
 
-	BitSet selectLessThan(E item);
+	BitSetExtended selectLessThan(E item);
 
-	BitSet selectLessThanOrEquals(E item);
+	BitSetExtended selectLessThanOrEquals(E item);
 
-	BitSet selectMoreThan(E item);
+	BitSetExtended selectMoreThan(E item);
 
-	BitSet selectMoreThanOrEquals(E item);
+	BitSetExtended selectMoreThanOrEquals(E item);
 
-	BitSet selectBetween(E from, E to);
+	BitSetExtended selectBetween(E from, E to);
 
-	Column<E> filter(BitSet bitSet);
+	Column<E> filter(BitSetExtended bitSet);
 
 	Double sum();
 
 	Double sum(int start, int end);
 
-	Double sum(BitSet bitSet);
+	Double sum(BitSetExtended bitSet);
 
-	Double sum(int start, int end, BitSet bitSet);
+	Double sum(int start, int end, BitSetExtended bitSet);
 
 	Integer count(int start, int end);
 
@@ -48,7 +48,9 @@ public interface Column<E extends Comparable> extends Iterable<Tuple2<E, Integer
 
 	Double avg(int start, int end);
 
-	Double avg(BitSet bitSet);
+	Double avg(BitSetExtended bitSet);
+	
+	Column<E> convertToPlain();
 
 	int length();
 
@@ -58,6 +60,7 @@ public interface Column<E extends Comparable> extends Iterable<Tuple2<E, Integer
 
 	ColumnType type();
 
+	@Override
 	String toString();
 
 }

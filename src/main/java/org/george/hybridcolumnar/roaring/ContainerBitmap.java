@@ -115,7 +115,7 @@ public class ContainerBitmap implements Container, Serializable {
 	@Override
 	public Container or(ContainerArray containerArray) {
 		short[] array = containerArray.getArray();
-		int n = containerArray.getSize();
+		int n = containerArray.getCardinality();
 		for (int i = 0; i < n; i++) {
 			bitSet.set(array[i] & 0xFFFF);
 		}
@@ -137,7 +137,7 @@ public class ContainerBitmap implements Container, Serializable {
 	@Override
 	public Container and(ContainerArray containerArray) {
 		short[] array = containerArray.getArray();
-		int n = containerArray.getSize();
+		int n = containerArray.getCardinality();
 		short[] array2 = new short[n];
 		int k = 0;
 		for (int i = 0; i < n; i++) {
@@ -162,7 +162,7 @@ public class ContainerBitmap implements Container, Serializable {
 
 	@Override
 	public int getSize() {
-		return 8 + bitSet.cardinality() / 8;
+		return 20 + bitSet.cardinality() / 8;
 	}
 
 	@Override

@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.george.hybridcolumnar.column.Column;
-import org.george.hybridcolumnar.column.ColumnPlain;
 import org.george.hybridcolumnar.column.ColumnRle;
+import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
 import org.george.hybridcolumnar.domain.Tuple2;
 
@@ -62,7 +62,6 @@ public class Chunk implements Iterable<Row>, Serializable {
 		id++;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Row get(int i) {
 		Row result = new Row();
 		Tuple2<?, Integer> tuple;
@@ -73,7 +72,7 @@ public class Chunk implements Iterable<Row>, Serializable {
 			if (minLength == null || tuple.getSecond() < minLength) {
 				minLength = tuple.getSecond();
 			}
-			result.add(colName, (Comparable) tuple.getFirst());
+			result.add(colName, tuple.getFirst());
 		}
 		result.setIndex(i);
 		result.setRunLength(minLength);
@@ -96,9 +95,25 @@ public class Chunk implements Iterable<Row>, Serializable {
 	private class ChunkIterator implements Iterator<Row> {
 
 		private int index;
+		@SuppressWarnings("rawtypes")
+		private HashMap<String, Iterator<Tuple2<Comparable, Integer>>> iterators;
+		private HashMap<String, Integer> nextIndex;
+		private Row previous;
 
 		public ChunkIterator() {
 			index = 0;
+			iterators = new HashMap<>();
+			nextIndex = new HashMap<>();
+			previous = null;
+			for (String colName : columns.keySet()) {
+				if (columns.get(colName).type() == ColumnType.ROARING) {
+					iterators.put(colName, columns.get(colName).convertToPlain().iterator());
+				}
+				else {
+					iterators.put(colName, columns.get(colName).iterator());
+				}
+				nextIndex.put(colName, 0);
+			}
 		}
 
 		@Override
@@ -106,11 +121,31 @@ public class Chunk implements Iterable<Row>, Serializable {
 			return index < id;
 		}
 
+		@SuppressWarnings("rawtypes")
 		@Override
 		public Row next() {
-			Row value = get(index);
-			index += (Integer) value.getRunLength();
-			return value;
+			Row result = new Row();
+			Integer minIndex = null;
+			for (String colName : columns.keySet()) {
+				Comparable value;
+				if (nextIndex.get(colName) <= index) {
+					Tuple2<Comparable, Integer> tuple = iterators.get(colName).next();
+					value = tuple.getFirst();
+					nextIndex.put(colName, nextIndex.get(colName) + tuple.getSecond());
+				}
+				else {
+					value = previous.get(colName);
+				}
+				if (minIndex == null || nextIndex.get(colName) < minIndex) {
+					minIndex = nextIndex.get(colName);
+				}
+				result.add(colName, value);
+			}
+			result.setIndex(index);
+			result.setRunLength(minIndex - index);
+			previous = result;
+			index = minIndex;
+			return result;
 		}
 
 	}
@@ -133,7 +168,7 @@ public class Chunk implements Iterable<Row>, Serializable {
 		@Override
 		public Row next() {
 			Row value = get(index);
-			index += (Integer) value.getRunLength();
+			index += value.getRunLength();
 			if (index < Integer.MAX_VALUE) {
 				index = bitset.nextSetBit(index);
 			}

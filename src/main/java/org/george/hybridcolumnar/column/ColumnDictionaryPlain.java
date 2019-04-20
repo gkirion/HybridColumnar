@@ -2,14 +2,15 @@ package org.george.hybridcolumnar.column;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.function.Predicate;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
 import org.george.hybridcolumnar.domain.Tuple2;
 import org.george.hybridcolumnar.util.Dictionary;
 
+@SuppressWarnings({ "serial", "rawtypes" })
 public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, Serializable {
 
 	private ArrayList<Integer> arrayList;
@@ -28,24 +29,29 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		id = 0;
 	}
 
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}
 
+	@Override
 	public void add(E item) {
 		Integer key = dictionary.insert(item);
 		arrayList.add(key);
 		id++;
 	}
 
+	@Override
 	public Tuple2<E, Integer> get(int i) {
 		return new Tuple2<E, Integer>(dictionary.get(arrayList.get(i)), 1);
 	}
 
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("[\n");
@@ -66,8 +72,9 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		return newColumn;
 	}
 
-	public BitSet select(Predicate<E> predicate) {
-		BitSet bitSet = new BitSet();
+	@Override
+	public BitSetExtended select(Predicate<E> predicate) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (predicate.test(dictionary.get(arrayList.get(i)))) {
 				bitSet.set(i);
@@ -77,8 +84,8 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 	}
 
 	@Override
-	public BitSet selectEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).equals(item)) {
 				bitSet.set(i);
@@ -88,17 +95,18 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 	}
 
 	@Override
-	public BitSet selectNotEquals(E item) {
-		BitSet bitSet = selectEquals(item);
-		BitSet bSet = new BitSet();
+	public BitSetExtended selectNotEquals(E item) {
+		BitSetExtended bitSet = selectEquals(item);
+		BitSetExtended bSet = new BitSetExtended();
 		bSet.set(0, id); // set all to 1
 		bSet.andNot(bitSet);
 		return bSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).compareTo(item) < 0) {
 				bitSet.set(i);
@@ -107,9 +115,10 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectLessThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectLessThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).compareTo(item) <= 0) {
 				bitSet.set(i);
@@ -118,9 +127,10 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThan(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThan(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).compareTo(item) > 0) {
 				bitSet.set(i);
@@ -129,9 +139,10 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectMoreThanOrEquals(E item) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectMoreThanOrEquals(E item) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).compareTo(item) >= 0) {
 				bitSet.set(i);
@@ -140,9 +151,10 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 		return bitSet;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public BitSet selectBetween(E from, E to) {
-		BitSet bitSet = new BitSet();
+	public BitSetExtended selectBetween(E from, E to) {
+		BitSetExtended bitSet = new BitSetExtended();
 		for (int i = 0; i < id; i++) {
 			if (dictionary.get(arrayList.get(i)).compareTo(from) >= 0
 					&& dictionary.get(arrayList.get(i)).compareTo(to) <= 0) {
@@ -167,7 +179,7 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 	}
 
 	@Override
-	public Double sum(BitSet bitSet) {
+	public Double sum(BitSetExtended bitSet) {
 		Double sum = 0.0;
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
@@ -193,7 +205,7 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 	}
 
 	@Override
-	public Double avg(BitSet bitSet) {
+	public Double avg(BitSetExtended bitSet) {
 		Long sum = new Long(0);
 		for (int i = 0; i < id; i++) {
 			if (bitSet.get(i)) {
@@ -224,7 +236,7 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 
 	@Override
 	public long sizeEstimation() {
-		return arrayList.size() * 4;
+		return dictionary.sizeEstimation() +  arrayList.size() * 16;
 	}
 
 	@Override
@@ -234,13 +246,19 @@ public class ColumnDictionaryPlain<E extends Comparable> implements Column<E>, S
 	}
 
 	@Override
-	public Column<E> filter(BitSet bitSet) {
+	public Column<E> filter(BitSetExtended bitSet) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Double sum(int start, int end, BitSet bitSet) {
+	public Double sum(int start, int end, BitSetExtended bitSet) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Column<E> convertToPlain() {
 		// TODO Auto-generated method stub
 		return null;
 	}

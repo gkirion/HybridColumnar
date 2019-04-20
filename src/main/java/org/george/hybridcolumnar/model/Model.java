@@ -1,26 +1,18 @@
 package org.george.hybridcolumnar.model;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.deeplearning4j.nn.modelimport.keras.KerasModelImport;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.InvalidKerasConfigurationException;
-import org.deeplearning4j.nn.modelimport.keras.exceptions.UnsupportedKerasConfigurationException;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.george.hybridcolumnar.column.Column;
 import org.george.hybridcolumnar.column.ColumnFactory;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
+import org.george.hybridcolumnar.domain.RowArray;
 import org.george.hybridcolumnar.domain.Tuple2;
-import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.io.ClassPathResource;
 
 public class Model {
 	
-	private MultiLayerNetwork model;
 	
 	private HashMap<Integer, ColumnType> encodings;
 	
@@ -31,19 +23,59 @@ public class Model {
 		encodings.put(2, ColumnType.DELTA);
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "rawtypes" })
+	public static HashMap<Integer, ColumnType> findBestEncodingArray(List<RowArray> rows) {
+		HashMap<Integer, ColumnType> bestEncoding = new HashMap<>();
+		HashMap<Integer, Long> minSize = new HashMap<>();
+		for (ColumnType columnType : ColumnType.values()) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN) {
+				continue;
+			}
+			HashMap<Integer, Column<Comparable>> columns = new HashMap<>();
+			for (RowArray row : rows) {
+				int index = 0;
+				for (Comparable item : row) { 
+					if (columns.get(index) == null) {
+						if (columnType == ColumnType.DELTA && !(item instanceof Integer)) {
+							columns.put(index, ColumnFactory.createColumn(ColumnType.DELTA_DICTIONARY));
+						}
+						else {
+							columns.put(index, ColumnFactory.createColumn(columnType));
+						}
+					}
+					columns.get(index).add(item);
+					index++;
+				}
+			}
+			for (Integer column : columns.keySet()) {
+				long sizeEstimation = columns.get(column).sizeEstimation();
+				if (minSize.get(column) == null || minSize.get(column) > sizeEstimation) {
+					minSize.put(column, sizeEstimation);
+					bestEncoding.put(column, columns.get(column).type());
+				}
+			}
+		}
+		return bestEncoding;
+	}
+	
+	@SuppressWarnings({ "rawtypes" })
 	public static HashMap<String, ColumnType> findBestEncoding(List<Row> rows) {
 		HashMap<String, ColumnType> bestEncoding = new HashMap<>();
 		HashMap<String, Long> minSize = new HashMap<>();
 		for (ColumnType columnType : ColumnType.values()) {
-			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN) {
 				continue;
 			}
 			HashMap<String, Column<Comparable>> columns = new HashMap<>();
 			for (Row row : rows) {
 				for (String key : row) { 
 					if (columns.get(key) == null) {
-						columns.put(key, ColumnFactory.createColumn(columnType));
+						if (columnType == ColumnType.DELTA && !(row.get(key) instanceof Integer)) {
+							columns.put(key, ColumnFactory.createColumn(ColumnType.DELTA_DICTIONARY));
+						}
+						else {
+							columns.put(key, ColumnFactory.createColumn(columnType));
+						}
 					}
 					columns.get(key).add(row.get(key));
 				}
@@ -52,36 +84,80 @@ public class Model {
 				long sizeEstimation = columns.get(column).sizeEstimation();
 				if (minSize.get(column) == null || minSize.get(column) > sizeEstimation) {
 					minSize.put(column, sizeEstimation);
-					bestEncoding.put(column, columnType);
+					bestEncoding.put(column, columns.get(column).type());
 				}
-				System.out.println(columnType + ": " + sizeEstimation);
 			}
 		}
 		return bestEncoding;
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
 	public static ColumnType findBestEncoding(Column<Comparable> column) {
 		Long minSize = null;
 		ColumnType bestEncoding = null;
 		for (ColumnType columnType : ColumnType.values()) {
-			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.RLE_DICTIONARY && columnType != ColumnType.DELTA && columnType != ColumnType.BIT_PACKING && columnType != ColumnType.BIT_PACKING_DICTIONARY) {
 				continue;
 			}
-			Column<Comparable> compressedColumn = ColumnFactory.createColumn(columnType, column.getName(), 1000);
+			Column<Comparable> compressedColumn;
+			if (columnType == ColumnType.DELTA && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.DELTA_DICTIONARY, column.getName(), 1000);
+			}
+			else if (columnType == ColumnType.BIT_PACKING && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.BIT_PACKING_DICTIONARY, column.getName(), 1000);
+			}
+			else if (columnType == ColumnType.RLE && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.RLE_DICTIONARY, column.getName(), 1000);
+			}
+			else {
+				compressedColumn = ColumnFactory.createColumn(columnType, column.getName(), 1000);
+			}
 			for (Tuple2<Comparable, Integer> item : column) {
 				compressedColumn.add(item.getFirst());
 			}
 			long sizeEstimation = compressedColumn.sizeEstimation();
 			if (minSize == null || sizeEstimation < minSize) {
 				minSize = sizeEstimation;
-				bestEncoding = columnType;
+				bestEncoding = compressedColumn.type();
 			}
 		}
 		return bestEncoding;
 	}
 	
-	public void loadModel(String path) throws IOException, InvalidKerasConfigurationException, UnsupportedKerasConfigurationException {
+	@SuppressWarnings({ "rawtypes" })
+	public static Column<Comparable> compressColumn(Column<Comparable> column) {
+		Long minSize = null;
+		Column<Comparable> bestEncoding = null;
+		for (ColumnType columnType : ColumnType.values()) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.RLE_DICTIONARY && columnType != ColumnType.DELTA && columnType != ColumnType.BIT_PACKING && columnType != ColumnType.BIT_PACKING_DICTIONARY) {
+				continue;
+			}
+			Column<Comparable> compressedColumn;
+			if (columnType == ColumnType.DELTA && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.DELTA_DICTIONARY, column.getName(), 1000);
+			}
+			else if (columnType == ColumnType.BIT_PACKING && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.BIT_PACKING_DICTIONARY, column.getName(), 1000);
+			}
+			else if (columnType == ColumnType.RLE && !(column.get(0).getFirst() instanceof Integer)) {
+				compressedColumn = ColumnFactory.createColumn(ColumnType.RLE_DICTIONARY, column.getName(), 1000);
+			}
+			else {
+				compressedColumn = ColumnFactory.createColumn(columnType, column.getName(), 1000);
+			}
+			for (Tuple2<Comparable, Integer> item : column) {
+				compressedColumn.add(item.getFirst());
+			}
+			long sizeEstimation = compressedColumn.sizeEstimation();
+			if (minSize == null || sizeEstimation < minSize) {
+				minSize = sizeEstimation;
+				bestEncoding = compressedColumn;
+			}
+		}
+		return bestEncoding;
+	}
+	
+/*	public void loadModel(String path) throws IOException, InvalidKerasConfigurationException, UnsupportedKerasConfigurationException {
 		// load the model
 		String simpleMlp = new ClassPathResource(path).getFile().getPath();
 		System.out.println(simpleMlp);
@@ -158,27 +234,38 @@ public class Model {
 			}
 		}
 		return encodings.get(index);
-	}
+	}*/
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static HashMap<String, Column<Comparable>> splitIntoColumns(List<Row> rows) {
-		HashMap<String, Column<Comparable>> columns = new HashMap<>();
-		for (Row row : rows) {
-			for (String key : row) { 
-				if (columns.get(key) == null) {
-					columns.put(key, ColumnFactory.createColumn(ColumnType.PLAIN, key));
+	@SuppressWarnings({ "rawtypes" })
+	public static HashMap<Integer, Column<Comparable>> splitIntoColumns(List<RowArray> rows) {
+		HashMap<Integer, Column<Comparable>> columns = new HashMap<>();
+		for (RowArray row : rows) {
+			int index = 0;
+			for (Comparable item : row) { 
+				if (columns.get(index) == null) {
+					columns.put(index, ColumnFactory.createColumn(ColumnType.PLAIN));
 				}
-				columns.get(key).add(row.get(key));
-			}
+				columns.get(index).add(item);
+				index++;
+			}  
 		}
 		return columns;
 	}
 	
-	public static List<List<Row>> splitIntoPacks(List<Row> rows, int packSize) {
-		List<List<Row>> packs = new ArrayList<>();
-		List<Row> pack = null;
+	@SuppressWarnings("rawtypes")
+	public static Column<Comparable> compressColumn(Column<Comparable> column, ColumnType columnType) {
+		Column<Comparable> compressedColumn = ColumnFactory.createColumn(columnType);
+		for (Tuple2<Comparable, Integer> item : column) {
+			compressedColumn.add(item.getFirst());
+		}
+		return compressedColumn;
+	}
+	
+	public static List<List<RowArray>> splitIntoPacks(List<RowArray> rows, int packSize) {
+		List<List<RowArray>> packs = new ArrayList<>();
+		List<RowArray> pack = null;
 		int i = 0;
-		for (Row row : rows) {
+		for (RowArray row : rows) {
 			if (i % packSize == 0) {
 				pack = new ArrayList<>();
 				packs.add(pack);
@@ -187,7 +274,6 @@ public class Model {
 			i++;
 		}
 		return packs;
-		
 	}
 
 }
