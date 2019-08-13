@@ -4,9 +4,6 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Random;
 
 import org.george.hybridcolumnar.chunk.Chunk;
@@ -14,12 +11,10 @@ import org.george.hybridcolumnar.column.Column;
 import org.george.hybridcolumnar.column.ColumnFactory;
 import org.george.hybridcolumnar.column.ColumnType;
 import org.george.hybridcolumnar.domain.Row;
-import org.george.hybridcolumnar.domain.RowArray;
-import org.george.hybridcolumnar.domain.Tuple2;
 
 public class ChunkDriver {
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static void main(String[] args) throws IOException, ParseException {
 		/*
 		 * Tuple2<Integer, String> tuple2 = new Tuple2<Integer, String>(29, "george");
@@ -1087,7 +1082,7 @@ public class ChunkDriver {
 			rows.add(row);
 		}
 		
-		rows.sort(new RowComparator(RowAnalyzer.analyze(rows)));
+		rows.sort(new RowComparator(RowAnalyzer.getColumnsOrderedByCardinality(rows)));
 		
 		for (ColumnType columnType : ColumnType.values()) {
 			if (columnType != ColumnType.RLE && columnType != ColumnType.RLE_DICTIONARY && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN && columnType != ColumnType.BIT_PACKING && columnType != ColumnType.BIT_PACKING_DICTIONARY) {
@@ -1194,147 +1189,5 @@ public class ChunkDriver {
 		}
 		
 	}
-
-	public static class RowComparator implements Comparator<Row> {
-
-		private List<String> orderList;
-
-		public RowComparator() {
-
-		}
-
-		public RowComparator(List<String> orderList) {
-			this.orderList = orderList;
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public int compare(Row o1, Row o2) {
-			for (String key : orderList) {
-				if (o1.get(key).compareTo(o2.get(key)) < 0) {
-					return -1;
-				} else if (o1.get(key).compareTo(o2.get(key)) > 0) {
-					return 1;
-				}
-			}
-			return 0;
-		}
-
-	}
-	
-	public static class RowArrayComparator implements Comparator<RowArray> {
-
-		private List<Integer> orderList;
-
-		public RowArrayComparator() {
-
-		}
-
-		public RowArrayComparator(List<Integer> orderList) {
-			this.orderList = orderList;
-		}
-
-		@Override
-		@SuppressWarnings("unchecked")
-		public int compare(RowArray o1, RowArray o2) {
-			for (Integer index : orderList) {
-				if (o1.get(index).compareTo(o2.get(index)) < 0) {
-					return -1;
-				} else if (o1.get(index).compareTo(o2.get(index)) > 0) {
-					return 1;
-				}
-			}
-			return 0;
-		}
-
-	}
-
-	public static class RowAnalyzer {
-
-
-		public static List<String> analyze(List<Row> rows) {
-			HashMap<String, HashMap<Comparable<?>, Boolean>> uniqueElements = new HashMap<>();
-			for (Row row : rows) {
-				for (String key : row) {
-					if (uniqueElements.get(key) == null) {
-						uniqueElements.put(key, new HashMap<>());
-					}
-					uniqueElements.get(key).put(row.get(key), true);
-				}
-			}
-			ArrayList<Tuple2<String, Integer>> cardinalities = new ArrayList<>();
-			for (String key : uniqueElements.keySet()) {
-				cardinalities.add(new Tuple2<String, Integer>(key, uniqueElements.get(key).size()));
-			}
-			cardinalities.sort(new Comparator<Tuple2<String, Integer>>() {
-
-				@Override
-				public int compare(Tuple2<String, Integer> o1, Tuple2<String, Integer> o2) {
-					return o1.getSecond().compareTo(o2.getSecond());
-				}
-
-			});
-			List<String> orderList = new ArrayList<>();
-			for (Tuple2<String, Integer> tuple : cardinalities) {
-				orderList.add(tuple.getFirst());
-			}
-			return orderList;
-
-		}
-		
-		public List<String> getOrderList(ArrayList<Tuple2<String, Integer>> cardinalities) {
-			List<String> orderList = new ArrayList<>();
-			for (Tuple2<String, Integer> tuple : cardinalities) {
-				orderList.add(tuple.getFirst());
-			}
-			return orderList;
-		}
-	}
-		
-		public static class RowArrayAnalyzer {
-
-			private List<RowArray> rows;
-
-			public RowArrayAnalyzer(List<RowArray> rows) {
-				this.rows = rows;
-			}
-
-			public ArrayList<Tuple2<Integer, Integer>> analyze() {
-				HashMap<Integer, HashMap<Comparable<?>, Boolean>> uniqueElements = new HashMap<>();
-				for (RowArray row : rows) {
-					int i = 0;
-					for (Comparable item : row) {
-						if (uniqueElements.get(i) == null) {
-							uniqueElements.put(i, new HashMap<>());
-						}
-						uniqueElements.get(i).put(item, true);
-						i++;
-					}
-				}
-				ArrayList<Tuple2<Integer, Integer>> cardinalities = new ArrayList<>();
-				
-				for (int i = 0; i < uniqueElements.size(); i++) {
-					cardinalities.add(new Tuple2<Integer, Integer>(i, uniqueElements.get(i).size()));
-				}
-				cardinalities.sort(new Comparator<Tuple2<Integer, Integer>>() {
-
-					@Override
-					public int compare(Tuple2<Integer, Integer> o1, Tuple2<Integer, Integer> o2) {
-						return o1.getSecond().compareTo(o2.getSecond());
-					}
-
-				});
-				return cardinalities;
-
-			}
-			
-			public List<Integer> getOrderArrayList(ArrayList<Tuple2<Integer, Integer>> cardinalities) {
-				List<Integer> orderList = new ArrayList<>();
-				for (Tuple2<Integer, Integer> tuple : cardinalities) {
-					orderList.add(tuple.getFirst());
-				}
-				return orderList;
-			}
-		}
 
 }
