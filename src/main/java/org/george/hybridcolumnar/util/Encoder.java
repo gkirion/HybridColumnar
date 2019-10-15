@@ -20,9 +20,11 @@ public class Encoder {
 			int index = 0;
 			for (Comparable item : row) { 
 				if (columns.get(index) == null) {
-					columns.put(index, ColumnFactory.createColumn(ColumnType.PLAIN));
+					columns.put(index, ColumnFactory.createColumn(ColumnType.RLE));
 				}
-				columns.get(index).add(item);
+				for (int i = 0; i < row.getRunLength(); i++) {
+					columns.get(index).add(item);
+				}
 				index++;
 			}  
 		}
@@ -33,17 +35,36 @@ public class Encoder {
 	public static ColumnType findBestEncoding(Column<Comparable> column) {
 		Long minSize = null;
 		ColumnType bestEncoding = null;
+		double avgRunLength = 0;
+		int runCount = 0;
+		for (Tuple2<Comparable, Integer> item : column) {
+			avgRunLength += item.getSecond();
+			runCount++;
+		}
+		avgRunLength = avgRunLength / runCount;
 		for (ColumnType columnType : ColumnType.values()) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.BIT_PACKING) {
+				continue;
+			}
+			if (avgRunLength > 100) {
+				columnType = ColumnType.RLE;
+			}
+			if (columnType == ColumnType.BIT_PACKING && !(column.get(0).getFirst() instanceof Integer)) {
+				columnType = ColumnType.BIT_PACKING_DICTIONARY;
+			} 
+			else if (columnType == ColumnType.DELTA && !(column.get(0).getFirst() instanceof Integer)) {
+				columnType = ColumnType.DELTA_DICTIONARY;
+			}
+			else if (columnType == ColumnType.RLE && !(column.get(0).getFirst() instanceof Number)) {
+				columnType = ColumnType.RLE_DICTIONARY;
+			}
+			
 			Column<Comparable> compressedColumn;
-			if (columnType == ColumnType.BITMAP) {
-				continue;
-			}
-			if ((columnType == ColumnType.DELTA || columnType == ColumnType.BIT_PACKING) && !(column.get(0).getFirst() instanceof Integer)) {
-				continue;
-			}
 			compressedColumn = ColumnFactory.createColumn(columnType, column.getName(), 1000);
 			for (Tuple2<Comparable, Integer> item : column) {
-				compressedColumn.add(item.getFirst());
+				for (int i = 0; i < item.getSecond(); i++) {
+					compressedColumn.add(item.getFirst());
+				}
 			}
 			long sizeEstimation = compressedColumn.sizeEstimation();
 			if (minSize == null || sizeEstimation < minSize) {
@@ -58,23 +79,38 @@ public class Encoder {
 	public static HashMap<Integer, ColumnType> findBestEncodingArray(List<RowArray> rows) {
 		HashMap<Integer, ColumnType> bestEncoding = new HashMap<>();
 		HashMap<Integer, Long> minSize = new HashMap<>();
+		double avgRunLength = 0;
+		for (RowArray row : rows) {
+			avgRunLength += row.getRunLength();
+		}
+		avgRunLength = avgRunLength / rows.size();
+		
 		for (ColumnType columnType : ColumnType.values()) {
-			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.PLAIN) {
+			if (columnType != ColumnType.RLE && columnType != ColumnType.DELTA && columnType != ColumnType.ROARING && columnType != ColumnType.BIT_PACKING) {
 				continue;
+			}
+			if (avgRunLength > 100) {
+				columnType = ColumnType.RLE;
 			}
 			HashMap<Integer, Column<Comparable>> columns = new HashMap<>();
 			for (RowArray row : rows) {
 				int index = 0;
 				for (Comparable item : row) { 
 					if (columns.get(index) == null) {
-						if (columnType == ColumnType.DELTA && !(item instanceof Integer)) {
-							columns.put(index, ColumnFactory.createColumn(ColumnType.DELTA_DICTIONARY));
+						if (columnType == ColumnType.BIT_PACKING && !(item instanceof Integer)) {
+							columnType = ColumnType.BIT_PACKING_DICTIONARY;
+						} 
+						else if (columnType == ColumnType.DELTA && !(item instanceof Integer)) {
+							columnType = ColumnType.DELTA_DICTIONARY;
 						}
-						else {
-							columns.put(index, ColumnFactory.createColumn(columnType));
+						else if (columnType == ColumnType.RLE && !(item instanceof Number)) {
+							columnType = ColumnType.RLE_DICTIONARY;
 						}
+						columns.put(index, ColumnFactory.createColumn(columnType));
 					}
-					columns.get(index).add(item);
+					for (int i = 0; i < row.getRunLength(); i++) {
+						columns.get(index).add(item);
+					}
 					index++;
 				}
 			}
@@ -126,7 +162,9 @@ public class Encoder {
 	public static Column<Comparable> compressColumn(Column<Comparable> column, ColumnType columnType) {
 		Column<Comparable> compressedColumn = ColumnFactory.createColumn(columnType);
 		for (Tuple2<Comparable, Integer> item : column) {
-			compressedColumn.add(item.getFirst());
+			for (int i = 0; i < item.getSecond(); i++) {
+				compressedColumn.add(item.getFirst());
+			}
 		}
 		return compressedColumn;
 	}

@@ -348,6 +348,4 @@ public class ColumnDictionaryRle<E extends Comparable> implements Column<E>, Ser
 		
 	}
 
-
-
 }
