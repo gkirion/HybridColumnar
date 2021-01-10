@@ -2,29 +2,19 @@ package org.george.hybridcolumnar.column;
 
 public class ColumnFactory {
 
-	@SuppressWarnings("rawtypes")
-	public <E extends Comparable> Column<E> createColumn(ColumnAnalyzer<Comparable> columnAnalyzer) {
-		// rules
-		return null;
-	}
 
 	@SuppressWarnings("rawtypes")
 	public static Column<Comparable> createColumn(ColumnType columnType) {
-		return createColumn(null, columnType, "", 1000);
+		return createColumn(columnType, "", 1000);
 	}
 	
 	@SuppressWarnings("rawtypes")
 	public static Column<Comparable> createColumn(ColumnType columnType, String columnName) {
-		return createColumn(null, columnType, columnName, 1000);
-	}
-	
-	@SuppressWarnings("rawtypes")
-	public static Column<Comparable> createColumn(ColumnType columnType, String columnName, int maxContainerSize) {
-		return createColumn(null, columnType, columnName, maxContainerSize);
+		return createColumn(columnType, columnName, 1000);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Column<Comparable> createColumn(ColumnAnalyzer<Comparable> columnAnalyzer, ColumnType columnType, String columnName, int maxContainerSize) {
+	public static Column<Comparable> createColumn(ColumnType columnType, String columnName, int maxContainerSize) {
 		Column<Comparable> column;
 		switch (columnType) {
 		case RLE:
@@ -40,18 +30,10 @@ public class ColumnFactory {
 			column = new ColumnBitmapRoaring<Comparable>(columnName, maxContainerSize);
 			break;
 		case DELTA:
-			if (columnAnalyzer != null) {
-				column = (Column) new ColumnDelta(columnName, maxContainerSize);
-			} else {
-				column = (Column) new ColumnDelta(columnName, maxContainerSize);
-			}
+			column = (Column) new ColumnDelta(columnName, maxContainerSize);
 			break;
 		case DELTA_DICTIONARY:
-			if (columnAnalyzer != null) {
-				column = new ColumnDictionaryDelta<Comparable>(columnName, maxContainerSize);
-			} else {
-				column = new ColumnDictionaryDelta<Comparable>();
-			}
+			column = new ColumnDictionaryDelta<Comparable>(columnName, maxContainerSize);
 			break;
 		case BIT_PACKING:
 			column = (Column) new ColumnBitPacking(columnName, maxContainerSize);
@@ -64,11 +46,6 @@ public class ColumnFactory {
 			break;
 		default:
 			column = new ColumnPlain<Comparable>(columnName);
-		}
-		if (columnAnalyzer != null) {
-			for (Comparable value : columnAnalyzer) {
-				column.add(value);
-			}
 		}
 		return column;
 	}

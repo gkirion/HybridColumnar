@@ -17,6 +17,7 @@ import org.george.hybridcolumnar.domain.Tuple2;
 public class Chunk implements Iterable<Row>, Serializable {
 
 	@SuppressWarnings("rawtypes")
+	String name;
 	private HashMap<String, Column<Comparable>> columns;
 	private Integer id;
 
@@ -24,7 +25,15 @@ public class Chunk implements Iterable<Row>, Serializable {
 		columns = new HashMap<>();
 		id = null;
 	}
-	
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	@SuppressWarnings("rawtypes")
 	public static List<Chunk> chunkify(List<Row> partition, int chunkSize) {
 		Chunk chunk = null;

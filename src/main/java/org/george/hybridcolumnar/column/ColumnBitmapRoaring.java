@@ -1,15 +1,15 @@
 package org.george.hybridcolumnar.column;
 
+import org.george.hybridcolumnar.domain.BitSetExtended;
+import org.george.hybridcolumnar.domain.Tuple2;
+import org.george.hybridcolumnar.roaring.Container;
+import org.george.hybridcolumnar.roaring.RoaringBitmap;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Predicate;
-
-import org.george.hybridcolumnar.domain.BitSetExtended;
-import org.george.hybridcolumnar.domain.Tuple2;
-import org.george.hybridcolumnar.roaring.Container;
-import org.george.hybridcolumnar.roaring.RoaringBitmap;
 
 @SuppressWarnings({ "serial", "rawtypes" })
 public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Serializable {
@@ -285,7 +285,7 @@ public class ColumnBitmapRoaring<E extends Comparable> implements Column<E>, Ser
 			else {
 				size += 32;
 			}
-			for (Container container : roaringBitmap) {
+			for (Container container : roaringBitmap) { // maybe not get size by cardinality, but by container size
 				size += container.getSize();
 			}
 		}

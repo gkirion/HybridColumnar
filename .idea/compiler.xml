@@ -7,10 +7,8 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Chunk" />
+        <module name="hybridcolumnar" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Chunk" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>
