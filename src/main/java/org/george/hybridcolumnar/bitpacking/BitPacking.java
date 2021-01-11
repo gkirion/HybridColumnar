@@ -12,7 +12,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 	private int length;
 	private int dataSize;
 	private final int CELL_SIZE = Integer.SIZE;
-	private final int MASK;
+	private final long MASK;
 	private final int NUMBER_CELLS;
 
 	public BitPacking() {
@@ -20,7 +20,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 		array = new int[length];
 		index = 0;
 		dataSize = 1;
-		MASK = (int) Math.pow(2, dataSize) - 1;
+		MASK = (long) Math.pow(2, dataSize) - 1;
 		NUMBER_CELLS = CELL_SIZE / dataSize;
 	}
 
@@ -37,7 +37,7 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 			}
 		}
 
-		MASK = (int) Math.pow(2, this.dataSize) - 1;
+		MASK = (long) Math.pow(2, this.dataSize) - 1;
 		NUMBER_CELLS = CELL_SIZE / this.dataSize;
 	}
 
@@ -58,9 +58,9 @@ public class BitPacking implements Iterable<Integer>, Serializable {
 	public Integer get(int i) {
 		int arrayIndex = i >> (CELL_SIZE - Integer.numberOfLeadingZeros(NUMBER_CELLS) - 1); // i / NUMBER_CELLS
 		int cellIndex = i & (NUMBER_CELLS - 1); // i % NUMBER_CELLS
-		int mask = MASK;
+		long mask = MASK;
 		mask = mask << cellIndex * dataSize;
-		int value = array[arrayIndex] & mask;
+		int value = (int) ((int) array[arrayIndex] & mask);
 		value = value >>> cellIndex * dataSize;
 		return value;
 	}
