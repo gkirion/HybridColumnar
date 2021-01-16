@@ -110,4 +110,42 @@ public class ColumnTest {
         }
     }
 
+    @Test
+    public void deltaValuesIntegrity() {
+        int[] numbers = {6, 622, 8, -238429, -100, 64354,4232,78, 9237498, 1000000, 5, -34, 834023, -1,2,3,-4,5,6,7,8,9};
+
+        List<Integer> list = new ArrayList<>();
+        Column<Integer> column = new ColumnDelta();
+        Random r = new Random();
+        for (int i = 0; i < 1000000; i ++) {
+            int index = r.nextInt(numbers.length);
+            list.add(numbers[index]);
+            column.add(numbers[index]);
+        }
+        int i = 0;
+        for (Tuple2<Integer, Integer> item : column) {
+            Assertions.assertEquals(list.get(i), item.getFirst(), "values stored in delta must be the same as in list");
+            i += item.getSecond();
+        }
+    }
+
+    @Test
+    public void deltaDictValuesIntegrity() {
+        int[] numbers = {6, 622, 8, -238429, -100, 64354,4232,78, 9237498, 1000000, 5, -34, 834023, -1,2,3,-4,5,6,7,8,9};
+
+        List<Integer> list = new ArrayList<>();
+        Column<Integer> column = new ColumnDictionaryDelta<>();
+        Random r = new Random();
+        for (int i = 0; i < 1000000; i ++) {
+            int index = r.nextInt(numbers.length);
+            list.add(numbers[index]);
+            column.add(numbers[index]);
+        }
+        int i = 0;
+        for (Tuple2<Integer, Integer> item : column) {
+            Assertions.assertEquals(list.get(i), item.getFirst(), "values stored in delta dict must be the same as in list");
+            i += item.getSecond();
+        }
+    }
+
 }

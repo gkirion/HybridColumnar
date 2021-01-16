@@ -23,8 +23,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="504bb903-3336-44af-963e-06f83d41e885" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/george/hybridcolumnar/util/Table.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/george/hybridcolumnar/util/TableRowAnalyzer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/george/hybridcolumnar/util/TableRowComparator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/ChunkTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/test/java/TableTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/george/hybridcolumnar/bitpacking/BitPacking.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/george/hybridcolumnar/bitpacking/BitPacking.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/ColumnTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/ColumnTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -104,37 +108,37 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="760" y="274" key="#Project_Structure/0.0.2560.1400@0.0.2560.1400" timestamp="1610014840069" />
-    <state x="1085" y="383" key="#com.intellij.ide.util.MemberChooser" timestamp="1610277392921">
+    <state x="1085" y="383" key="#com.intellij.ide.util.MemberChooser" timestamp="1610651742611">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="1085" y="383" key="#com.intellij.ide.util.MemberChooser/0.0.2560.1400@0.0.2560.1400" timestamp="1610277392921" />
-    <state width="2517" height="401" key="GridCell.Tab.0.bottom" timestamp="1610375875798">
+    <state x="1085" y="383" key="#com.intellij.ide.util.MemberChooser/0.0.2560.1400@0.0.2560.1400" timestamp="1610651742611" />
+    <state width="2517" height="401" key="GridCell.Tab.0.bottom" timestamp="1610820703283">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="401" key="GridCell.Tab.0.bottom/0.0.2560.1400@0.0.2560.1400" timestamp="1610375875798" />
-    <state width="2517" height="401" key="GridCell.Tab.0.center" timestamp="1610375875798">
+    <state width="2517" height="401" key="GridCell.Tab.0.bottom/0.0.2560.1400@0.0.2560.1400" timestamp="1610820703283" />
+    <state width="2517" height="401" key="GridCell.Tab.0.center" timestamp="1610820703283">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="401" key="GridCell.Tab.0.center/0.0.2560.1400@0.0.2560.1400" timestamp="1610375875798" />
-    <state width="2517" height="401" key="GridCell.Tab.0.left" timestamp="1610375875798">
+    <state width="2517" height="401" key="GridCell.Tab.0.center/0.0.2560.1400@0.0.2560.1400" timestamp="1610820703283" />
+    <state width="2517" height="401" key="GridCell.Tab.0.left" timestamp="1610820703283">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="401" key="GridCell.Tab.0.left/0.0.2560.1400@0.0.2560.1400" timestamp="1610375875798" />
-    <state width="2517" height="401" key="GridCell.Tab.0.right" timestamp="1610375875798">
+    <state width="2517" height="401" key="GridCell.Tab.0.left/0.0.2560.1400@0.0.2560.1400" timestamp="1610820703283" />
+    <state width="2517" height="401" key="GridCell.Tab.0.right" timestamp="1610820703283">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="401" key="GridCell.Tab.0.right/0.0.2560.1400@0.0.2560.1400" timestamp="1610375875798" />
+    <state width="2517" height="401" key="GridCell.Tab.0.right/0.0.2560.1400@0.0.2560.1400" timestamp="1610820703283" />
     <state x="781" y="344" key="SettingsEditor" timestamp="1610023772712">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="781" y="344" key="SettingsEditor/0.0.2560.1400@0.0.2560.1400" timestamp="1610023772712" />
-    <state x="936" y="330" width="672" height="677" key="run.anything.popup" timestamp="1610375875784">
+    <state x="936" y="330" width="672" height="677" key="run.anything.popup" timestamp="1610820703269">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="936" y="330" width="672" height="677" key="run.anything.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1610375875784" />
-    <state x="943" y="315" key="search.everywhere.popup" timestamp="1610015631201">
+    <state x="936" y="330" width="672" height="677" key="run.anything.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1610820703269" />
+    <state x="943" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1610817166960">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="943" y="315" key="search.everywhere.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1610015631201" />
+    <state x="943" y="315" width="672" height="678" key="search.everywhere.popup/0.0.2560.1400@0.0.2560.1400" timestamp="1610817166960" />
   </component>
 </project>
